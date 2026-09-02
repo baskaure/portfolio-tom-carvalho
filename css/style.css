@@ -124,13 +124,17 @@ nav ul a:hover::before,nav ul a:hover::after{opacity:1}
   mix-blend-mode:multiply;
 }
 .hero-title .l1{
-  font-size:clamp(150px, 40vh, 400px);
+  font-size:clamp(180px, 47vh, 540px);
   transform:scaleY(1.25);transform-origin:top left;
+  /* L'étirement part du haut : le glyphe déborde sous sa boîte d'un quart de
+     la hauteur de ligne (.78em), soit .195em, que le flux ignore. On lui rend
+     cette hauteur, sinon CARVALHO remonte dans TOM dès qu'on l'agrandit. */
+  margin-bottom:.195em;
 }
 .hero-title .l2{
-  font-size:clamp(58px, 16.5vh, 170px);
+  font-size:clamp(58px, 17.5vh, 180px);
   transform:scaleY(1.3);transform-origin:top left;
-  margin-top:6vh;
+  margin-top:3.5vh;
   letter-spacing:.005em;
 }
 /* crédit haut droite (façon "BRAD PITT") */
@@ -151,16 +155,6 @@ nav ul a:hover::before,nav ul a:hover::after{opacity:1}
   background:rgba(241,239,234,.72);
   box-shadow:0 0 36px 28px rgba(241,239,234,.72);
 }
-.hero-desc .hand{
-  display:block;margin-top:26px;
-  font-family:'Caveat', cursive;font-weight:600;
-  font-size:clamp(22px,2vw,30px);line-height:1.1;
-  transform:rotate(-4deg);
-  color:var(--rouge);text-transform:none;letter-spacing:0;
-}
-.hero-desc .arrow{
-  display:block;width:34px;height:44px;margin:8px 0 0 12px;
-}
 /* étoile rouge qui déborde du bord droit */
 .spark{position:absolute;pointer-events:none}
 .spark svg{display:block;width:100%;height:100%}
@@ -178,7 +172,7 @@ nav ul a:hover::before,nav ul a:hover::after{opacity:1}
 }
 .hero-scroll{
   position:absolute;z-index:5;
-  right:28px;bottom:4vh;
+  left:50%;transform:translateX(-50%);bottom:4vh;
   font-family:var(--mono);font-size:11px;letter-spacing:.18em;
   text-transform:uppercase;color:#141414;text-align:right;
 }
@@ -224,16 +218,6 @@ section{position:relative}
 }
 .about-grid{position:relative;z-index:10}
 .about .big{color:var(--blanc)}
-.stamp{
-  position:absolute;bottom:-26px;left:-48px;z-index:7;
-  font-family:var(--mono);font-size:12px;letter-spacing:.26em;
-  text-transform:uppercase;color:var(--rouge);
-  border:2px solid var(--rouge);padding:10px 18px;
-  background:var(--noir);
-  transform:rotate(-7deg);
-  box-shadow:inset 0 0 0 3px var(--noir), inset 0 0 0 4px var(--rouge), 0 14px 30px rgba(0,0,0,.5);
-  white-space:nowrap;
-}
 .about-grid{
   display:grid;
   grid-template-columns:repeat(12,1fr);
@@ -241,7 +225,7 @@ section{position:relative}
 }
 .about-head{grid-column:1 / 9;margin-top:0}
 .about-head h2{
-  font-size:clamp(44px,7.8vw,124px);
+  font-size:clamp(40px,6.6vw,104px);
   margin-top:26px;
 }
 .about-head h2 .red{color:var(--rouge)}
@@ -259,14 +243,9 @@ section{position:relative}
   box-shadow:0 28px 60px rgba(0,0,0,.65);
   position:relative;z-index:5;
 }
-.about-photo img{filter:grayscale(1) contrast(1.3) brightness(1.04)}
-.about-photo .scribble{
-  position:absolute;z-index:5;
-  width:56%;aspect-ratio:1;
-  top:-14%;left:-20%;
-  pointer-events:none;
-}
-.about-photo .ht{aspect-ratio:4/5}
+
+.about-photo .ht{aspect-ratio:4/5;background:#0a0a0a}
+.about-photo img{image-rendering:auto}
 .about-photo .caption{
   position:absolute;bottom:-36px;left:0;right:0;
   font-family:var(--mono);font-size:10px;letter-spacing:.12em;
@@ -312,7 +291,7 @@ section{position:relative}
    WORK — grille cassée
    ============================================================ */
 .work{
-  padding:10vh 0 16vh;
+  padding:6vh 0 14vh;
   background:var(--noir);
   border-top:1px solid #1e1e1e;
 }
@@ -400,10 +379,7 @@ section{position:relative}
 /* placements asymétriques + tailles variées, imbriqués serré */
 .c1{grid-column:1 / 8;aspect-ratio:16/10;transform:rotate(-.6deg)}
 .c2{grid-column:8 / 13;aspect-ratio:4/5;margin-top:9vh;transform:rotate(1deg)}
-.c3{grid-column:1 / 6;aspect-ratio:4/5;margin-top:-13vh;z-index:4}
-.c4{grid-column:6 / 13;aspect-ratio:16/9;margin-top:4vh;transform:rotate(.8deg)}
-.c5{grid-column:1 / 7;aspect-ratio:16/11;margin-top:5vh;transform:rotate(-1.2deg)}
-.c6{grid-column:7 / 13;aspect-ratio:4/3;margin-top:11vh;z-index:4}
+.c3{grid-column:1 / 8;aspect-ratio:21/9;margin-top:-9vh;transform:rotate(-.8deg);z-index:4}
 .work-more{
   grid-column:8 / 13;align-self:end;justify-self:end;
   margin-top:5vh;text-align:right;
@@ -474,9 +450,8 @@ section{position:relative}
 .g1{grid-column:1 / 5;aspect-ratio:4/5;transform:rotate(-1.6deg)}
 .g2{grid-column:5 / 10;aspect-ratio:16/10;margin-top:5vh;transform:rotate(.7deg);z-index:2}
 .g3{grid-column:10 / 13;aspect-ratio:3/4;margin-top:-3vh;transform:rotate(2.2deg)}
-.g4{grid-column:1 / 6;aspect-ratio:16/11;margin-top:3vh;transform:rotate(1deg)}
-.g5{grid-column:6 / 10;aspect-ratio:4/5;margin-top:-7vh;transform:rotate(-1.4deg);z-index:2}
-.g6{grid-column:10 / 13;aspect-ratio:4/5;margin-top:5vh;transform:rotate(-2deg)}
+.g4{grid-column:1 / 7;aspect-ratio:16/10;margin-top:3vh;transform:rotate(1deg)}
+.g5{grid-column:7 / 13;aspect-ratio:16/9;margin-top:-2vh;transform:rotate(-1.2deg);z-index:2}
 .gal-note{
   grid-column:1 / 6;align-self:end;
   margin-top:4vh;
@@ -488,7 +463,7 @@ section{position:relative}
   .gal-grid{display:block}
   .gph{margin:0 0 46px !important;aspect-ratio:auto !important}
   .g1,.g5{width:88%}
-  .g3,.g6{width:80%;margin-left:auto !important}
+  .g3{width:80%;margin-left:auto !important}
   .gal-note{margin-top:10px}
 }
 
