@@ -216,12 +216,11 @@ section{position:relative}
 }
 .about::before{
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:url("img/halftone.png");
+  background:url("../img/halftone.png");
   background-size:1000px auto;
   opacity:.08;
-  -webkit-mask-image:repeating-conic-gradient(transparent 0 25%, #000 0 50%);
-  mask-image:repeating-conic-gradient(transparent 0 25%, #000 0 50%);
-  -webkit-mask-size:2000px 2800px;mask-size:2000px 2800px;
+  -webkit-mask-image:linear-gradient(90deg, #000 0 1000px, transparent 1000px);
+  mask-image:linear-gradient(90deg, #000 0 1000px, transparent 1000px);
 }
 .about-grid{position:relative;z-index:10}
 .about .big{color:var(--blanc)}
@@ -504,12 +503,11 @@ section{position:relative}
 }
 .services::before{
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:url("img/halftone.png");
+  background:url("../img/halftone.png");
   background-size:900px auto;
   opacity:.16;
-  -webkit-mask-image:repeating-conic-gradient(transparent 0 25%, #000 0 50%);
-  mask-image:repeating-conic-gradient(transparent 0 25%, #000 0 50%);
-  -webkit-mask-size:1800px 2520px;mask-size:1800px 2520px;
+  -webkit-mask-image:linear-gradient(90deg, #000 0 900px, transparent 900px);
+  mask-image:linear-gradient(90deg, #000 0 900px, transparent 900px);
 }
 .services .ghost{
   position:absolute;top:2vh;right:-1vw;
@@ -563,12 +561,11 @@ section{position:relative}
 }
 .contact::before{
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:url("img/halftone.png");
+  background:url("../img/halftone.png");
   background-size:1100px auto;
   opacity:.1;
-  -webkit-mask-image:repeating-conic-gradient(#000 0 25%, transparent 0 50%);
-  mask-image:repeating-conic-gradient(#000 0 25%, transparent 0 50%);
-  -webkit-mask-size:2200px 3080px;mask-size:2200px 3080px;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0 1100px, #000 1100px);
+  mask-image:linear-gradient(90deg, transparent 0 1100px, #000 1100px);
 }
 .contact > *{position:relative;z-index:2}
 .contact .sec-label{margin-bottom:6vh}
