@@ -1,0 +1,111 @@
+# Decap CMS — back-office des médias du site
+# Auth : Netlify Identity + Git Gateway (à activer dans le dashboard Netlify, voir README)
+backend:
+  name: git-gateway
+  branch: main
+  commit_messages:
+    create: "admin: ajout {{collection}} — {{slug}}"
+    update: "admin: modification {{collection}} — {{slug}}"
+    delete: "admin: suppression {{collection}} — {{slug}}"
+    uploadMedia: "admin: upload {{path}}"
+    deleteMedia: "admin: suppression {{path}}"
+
+locale: fr
+site_url: /
+logo_url: /img/portrait-tom.jpg
+
+# Uploads -> img/ ; chemins stockés en absolu (/img/xxx.jpg) pour marcher depuis / et /services/
+media_folder: "img"
+public_folder: "/img"
+
+editor:
+  preview: false
+
+collections:
+  - name: "accueil"
+    label: "Accueil"
+    files:
+      - name: "accueil"
+        label: "Page d'accueil"
+        file: "data/accueil.json"
+        fields:
+          - label: "Hero — grande photo"
+            name: "hero"
+            widget: "object"
+            fields:
+              - { label: "Image", name: "image", widget: "image" }
+              - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
+          - label: "Manifeste — portrait scotché"
+            name: "manifeste"
+            widget: "object"
+            fields:
+              - { label: "Image", name: "image", widget: "image" }
+              - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
+              - { label: "Légende", name: "legende", widget: "string" }
+          - label: "Projets (section 02)"
+            name: "projets"
+            widget: "list"
+            summary: "{{fields.titre}} — {{fields.type}}"
+            fields:
+              - { label: "Titre", name: "titre", widget: "string" }
+              - { label: "Type", name: "type", widget: "string", hint: "Ex. Automobile, Institutionnel, Événementiel" }
+              - { label: "Image (ou vignette si vidéo)", name: "image", widget: "image" }
+              - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
+              - { label: "Vidéo (fichier .mp4, lecture au survol)", name: "video", widget: "file", required: false}
+              - { label: "Lien (YouTube, Vimeo, Instagram…)", name: "lien", widget: "string", required: false, hint: "Si rempli, le clic ouvre ce lien" }
+          - label: "Galerie photo (section 03)"
+            name: "galerie"
+            widget: "list"
+            summary: "{{fields.legende}}"
+            fields:
+              - { label: "Image", name: "image", widget: "image" }
+              - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
+              - { label: "Légende", name: "legende", widget: "string" }
+              - label: "Style"
+                name: "style"
+                widget: "select"
+                default: "raw"
+                options:
+                  - { label: "Polaroid (cadre blanc + scotch)", value: "polar" }
+                  - { label: "Brut (filet noir)", value: "raw" }
+
+  - name: "services"
+    label: "Services"
+    files:
+      - &service
+        name: "contenu"
+        label: "/01 Contenu"
+        file: "data/services/contenu.json"
+        fields:
+          - label: "Hero — photo de fond"
+            name: "hero"
+            widget: "object"
+            fields:
+              - { label: "Image", name: "image", widget: "image" }
+              - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
+          - { label: "Période affichée", name: "periode", widget: "string", default: "2023 — 2026" }
+          - label: "Contenus"
+            name: "medias"
+            widget: "list"
+            summary: "{{fields.titre}} — {{fields.type}}"
+            fields:
+              - label: "Format"
+                name: "format"
+                widget: "select"
+                default: "m-w"
+                options:
+                  - { label: "Large (16/10)", value: "m-w" }
+                  - { label: "Étroit (4/5)", value: "m-n" }
+                  - { label: "Vertical (9/16 — reels)", value: "m-v" }
+                  - { label: "Demi-largeur (16/9)", value: "m-h" }
+                  - { label: "Pleine largeur (21/9)", value: "m-f" }
+              - { label: "Titre", name: "titre", widget: "string" }
+              - { label: "Type", name: "type", widget: "string", hint: "Ex. Reel, Film de marque, Aftermovie…" }
+              - { label: "Image (ou vignette si vidéo)", name: "image", widget: "image" }
+              - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
+              - { label: "Vidéo (fichier .mp4, lecture au survol)", name: "video", widget: "file", required: false }
+              - { label: "Lien (YouTube, Vimeo, Instagram…)", name: "lien", widget: "string", required: false, hint: "Si rempli, le clic ouvre ce lien" }
+      - { <<: *service, name: "institutionnel", label: "/02 Institutionnel", file: "data/services/institutionnel.json" }
+      - { <<: *service, name: "aftermovies", label: "/03 Aftermovies", file: "data/services/aftermovies.json" }
+      - { <<: *service, name: "shooting", label: "/04 Shooting", file: "data/services/shooting.json" }
+      - { <<: *service, name: "etalonnage", label: "/05 Étalonnage", file: "data/services/etalonnage.json" }

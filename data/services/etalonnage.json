@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "image": "/img/DSC00203.jpg",
+    "alt": "Col de montagne, plan drone"
+  },
+  "periode": "2023 — 2026",
+  "medias": [
+    {
+      "format": "m-f",
+      "titre": "Entre deux prises",
+      "type": "Étalonnage",
+      "image": "/img/DSC00899.jpg",
+      "alt": "Look chaud, couchant",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-h",
+      "titre": "Face au vent",
+      "type": "Montage",
+      "image": "/img/DSC00884.jpg",
+      "alt": "Face au vent",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-h",
+      "titre": "Plateau, 7h12",
+      "type": "Étalonnage",
+      "image": "/img/DSC00883.jpg",
+      "alt": "Silhouette dans la vallée",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Serra da Estrela",
+      "type": "Montage",
+      "image": "/img/DSC00912.jpg",
+      "alt": "Serra da Estrela",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-n",
+      "titre": "Portrait",
+      "type": "Étalonnage",
+      "image": "/img/DSC00799.jpg",
+      "alt": "Portrait en montagne",
+      "video": "",
+      "lien": ""
+    }
+  ]
+}

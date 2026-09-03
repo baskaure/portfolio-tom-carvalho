@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+
+# pas de cache sur les données éditées via l'admin
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "no-cache"

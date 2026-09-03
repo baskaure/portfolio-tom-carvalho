@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600&family=Archivo:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body data-page="accueil">
 
 <div class="grain" aria-hidden="true"></div>
 
@@ -183,31 +183,31 @@
   <div class="ghost" aria-hidden="true">SERV<br>ICES</div>
   <div class="sec-label sr">04 — Mes Réalisations</div>
 
-  <div class="svc sr">
+  <a class="svc sr" href="services/contenu.html">
     <span class="num">/01</span>
     <h3>Contenu</h3>
     <p>Des formats courts qui arrêtent le scroll. Pensés pour les réseaux sociaux et le web.</p>
-  </div>
-  <div class="svc sr">
+  </a>
+  <a class="svc sr" href="services/institutionnel.html">
     <span class="num">/02</span>
     <h3>Institutionnel</h3>
     <p>Films de marque et communication d'entreprise. Votre image, claire et forte.</p>
-  </div>
-  <div class="svc sr">
+  </a>
+  <a class="svc sr" href="services/aftermovies.html">
     <span class="num">/03</span>
     <h3>Aftermovies</h3>
     <p>Festivals, concerts, événements. L'énergie de la nuit, condensée en 2 minutes.</p>
-  </div>
-  <div class="svc sr">
+  </a>
+  <a class="svc sr" href="services/shooting.html">
     <span class="num">/04</span>
     <h3>Shooting</h3>
     <p>Portraits, produits, campagnes — des images fixes qui tiennent debout toutes seules.</p>
-  </div>
-  <div class="svc sr">
+  </a>
+  <a class="svc sr" href="services/etalonnage.html">
     <span class="num">/05</span>
     <h3>Étalonnage</h3>
     <p>Vous avez les rushes, j'ai le rythme. Montage nerveux, colorimétrie aux petits oignons.</p>
-  </div>
+  </a>
 </section>
 
 <!-- ================= CONTACT ================= -->
@@ -265,6 +265,17 @@
 </footer>
 
 <script src="js/main.js"></script>
+<script src="js/content.js"></script>
+<script>
+// Netlify Identity : les liens d'invitation / réinitialisation arrivent sur la racine du site,
+// on ne charge le widget que dans ce cas et on renvoie vers /admin/ après connexion.
+if (/invite_token|recovery_token|confirmation_token|email_change_token/.test(location.hash)) {
+  const s = document.createElement('script');
+  s.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+  s.onload = () => netlifyIdentity.on('login', () => { location.href = '/admin/'; });
+  document.head.appendChild(s);
+}
+</script>
 
 </body>
 </html>

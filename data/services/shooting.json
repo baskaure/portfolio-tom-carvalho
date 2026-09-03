@@ -1,0 +1,63 @@
+{
+  "hero": {
+    "image": "/img/DSC00799.jpg",
+    "alt": "Portrait en montagne"
+  },
+  "periode": "2023 — 2026",
+  "medias": [
+    {
+      "format": "m-n",
+      "titre": "Portrait GT3",
+      "type": "Portrait",
+      "image": "/img/DSC09355.jpg",
+      "alt": "Portrait devant une Porsche GT3",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Col de la Furka",
+      "type": "Campagne",
+      "image": "/img/DSC00203.jpg",
+      "alt": "Col de montagne",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-n",
+      "titre": "Serra da Estrela",
+      "type": "Argentique",
+      "image": "/img/DSC00912.jpg",
+      "alt": "Serra da Estrela",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Entre deux prises",
+      "type": "Campagne",
+      "image": "/img/DSC00899.jpg",
+      "alt": "Marche parmi les vaches",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-n",
+      "titre": "Face au vent",
+      "type": "Portrait",
+      "image": "/img/DSC00884.jpg",
+      "alt": "Face au vent",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Plateau, 7h12",
+      "type": "Numérique",
+      "image": "/img/DSC00883.jpg",
+      "alt": "Silhouette dans la vallée",
+      "video": "",
+      "lien": ""
+    }
+  ]
+}

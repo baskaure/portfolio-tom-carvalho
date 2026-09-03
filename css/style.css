@@ -603,3 +603,210 @@ footer{
 }
 footer .up{color:var(--gris)}
 footer .up:hover{color:var(--rouge)}
+
+/* ============================================================
+   PAGES SERVICES — /01 … /05 (services/*.html)
+   ============================================================ */
+/* logo toujours visible hors accueil */
+.page-service nav.hide-logo .logo{opacity:1;pointer-events:auto}
+
+/* ---- hero : numéro fantôme géant + photo N&B fondue à droite ---- */
+.sh{
+  position:relative;min-height:92vh;min-height:92svh;overflow:hidden;
+  background:var(--noir);color:var(--gris-clair);
+  padding:24vh 6vw 14vh;
+  display:grid;grid-template-columns:repeat(12,1fr);gap:24px;align-content:end;
+}
+.sh::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:url("../img/halftone.png");
+  background-size:900px auto;
+  opacity:.1;
+  -webkit-mask-image:linear-gradient(90deg, #000 0 900px, transparent 900px);
+  mask-image:linear-gradient(90deg, #000 0 900px, transparent 900px);
+}
+.sh-photo{
+  position:absolute;z-index:1;top:0;right:0;
+  width:min(58vw,880px);height:100%;
+}
+.sh-photo img{
+  width:100%;height:100%;object-fit:cover;
+  filter:grayscale(1) contrast(1.3) brightness(.62);
+}
+.sh-photo::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg, var(--noir) 0%, rgba(10,10,10,.35) 45%, rgba(10,10,10,0) 100%),
+             linear-gradient(180deg, rgba(10,10,10,.5) 0%, rgba(10,10,10,0) 30%, rgba(10,10,10,0) 60%, var(--noir) 100%);
+}
+.sh .ghost{
+  position:absolute;z-index:2;top:6vh;right:-1vw;
+  font-family:var(--anton);font-size:clamp(220px,38vw,640px);line-height:.8;
+  color:transparent;-webkit-text-stroke:1px rgba(241,239,234,.22);
+  pointer-events:none;user-select:none;
+}
+.sh-head{grid-column:1 / 10;position:relative;z-index:3}
+.sh-head .sec-label{margin-bottom:38px}
+.sh-head h1{
+  font-family:var(--anton);text-transform:uppercase;
+  font-size:clamp(64px,11.5vw,210px);line-height:.85;letter-spacing:0;
+  color:var(--blanc);margin-left:-0.03em;
+}
+.sh-head h1 em{font-style:normal;color:var(--rouge)}
+.sh-pitch{
+  grid-column:1 / 7;position:relative;z-index:3;
+  margin-top:5vh;
+  font-family:var(--oswald);font-weight:400;
+  font-size:clamp(18px,2vw,27px);line-height:1.4;color:var(--gris-clair);
+  border-left:3px solid var(--rouge);padding-left:20px;
+}
+.sh-meta{
+  grid-column:9 / 13;align-self:end;justify-self:end;position:relative;z-index:3;
+  margin-top:5vh;text-align:right;
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;line-height:2;
+  text-transform:uppercase;color:var(--gris);
+}
+.sh-meta b{color:var(--rouge);font-weight:500}
+.spark-sh{
+  z-index:3;width:clamp(90px,10vw,150px);aspect-ratio:1;
+  left:52vw;top:14vh;
+  animation:spin 40s linear infinite;
+}
+@media(max-width:900px){
+  .sh{display:block;padding:20vh 6vw 8vh;min-height:auto}
+  .sh-photo{width:100vw;opacity:.55}
+  .sh .ghost{font-size:clamp(160px,48vw,320px);top:8vh}
+  .sh-head h1{font-size:clamp(52px,16vw,120px)}
+  .sh-pitch{margin-top:6vh}
+  .sh-meta{text-align:left;margin-top:5vh}
+  .spark-sh{display:none}
+}
+
+/* ---- contenus : grille noire, emplacements photo / vidéo ---- */
+.sd-media{
+  background:var(--noir);border-top:1px solid #1e1e1e;
+  padding:10vh 5vw 14vh;position:relative;overflow:hidden;
+}
+.sd-media::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:url("../img/halftone.png");
+  background-size:1000px auto;
+  opacity:.07;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0 1000px, #000 1000px);
+  mask-image:linear-gradient(90deg, transparent 0 1000px, #000 1000px);
+}
+.sd-media .head{
+  position:relative;z-index:2;padding:0 1vw;margin-bottom:7vh;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:24px;
+}
+.sd-media .count{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gris);text-align:right;line-height:1.8;
+}
+.sd-media .grid{
+  position:relative;z-index:2;
+  display:grid;grid-template-columns:repeat(12,1fr);gap:20px;
+}
+/* emplacement : <img> ou <video> dans .ht, idx + meta comme les cartes projets */
+.med{position:relative;display:block}
+.med .ht{width:100%;height:100%}
+.med .ht video{width:100%;height:100%;object-fit:cover;display:block}
+.med .idx{
+  position:absolute;z-index:5;
+  font-family:var(--anton);font-size:clamp(48px,5.5vw,90px);
+  color:var(--rouge);line-height:1;
+  top:-0.45em;left:-8px;
+}
+.med .meta{
+  position:absolute;z-index:5;left:0;right:0;bottom:0;
+  padding:18px 16px 14px;
+  background:linear-gradient(180deg, rgba(10,10,10,0), rgba(10,10,10,.92) 70%);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
+}
+.med h3{
+  font-family:var(--anton);font-size:clamp(22px,2.2vw,36px);
+  text-transform:uppercase;color:var(--blanc);line-height:.95;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1);
+}
+.med .kind{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--gris);white-space:nowrap;padding-bottom:4px;
+}
+.med .play{
+  position:absolute;z-index:6;top:50%;left:50%;
+  width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;
+  background:var(--rouge);display:grid;place-items:center;
+  opacity:0;transform:scale(.5) rotate(-10deg);
+  transition:.35s cubic-bezier(.2,.8,.2,1);
+  box-shadow:0 12px 32px rgba(0,0,0,.45);
+}
+.med .play::before{
+  content:"";width:0;height:0;margin-left:5px;
+  border-left:22px solid var(--noir);
+  border-top:13px solid transparent;border-bottom:13px solid transparent;
+}
+.med:hover .tint{opacity:.85}
+.med:hover img{filter:grayscale(1) contrast(1.2)}
+.med:hover .play{opacity:1;transform:scale(1) rotate(0deg)}
+.med:hover h3{transform:translateX(8px) skewX(-4deg);color:var(--noir)}
+.med:hover .meta{background:none}
+.med:hover .kind{color:var(--noir)}
+/* formats */
+.m-w{grid-column:span 7;aspect-ratio:16/10}
+.m-n{grid-column:span 5;aspect-ratio:4/5}
+.m-v{grid-column:span 4;aspect-ratio:9/16}
+.m-f{grid-column:span 12;aspect-ratio:21/9}
+.m-h{grid-column:span 6;aspect-ratio:16/9}
+/* légers décalages, comme la grille projets */
+.grid .med:nth-child(3n+1){transform:rotate(-.6deg)}
+.grid .med:nth-child(3n+2){transform:rotate(.7deg);margin-top:5vh}
+.grid .med:nth-child(3n){transform:rotate(-.4deg)}
+.sd-media .more{
+  grid-column:1 / 13;justify-self:end;margin-top:6vh;text-align:right;
+  font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--gris);line-height:2;
+}
+.sd-media .more a{color:var(--rouge);border-bottom:1px solid var(--rouge);padding-bottom:2px}
+.sd-media .more a:hover{background:var(--rouge);color:var(--noir)}
+@media(max-width:900px){
+  .sd-media .head{flex-direction:column;align-items:flex-start}
+  .sd-media .grid{display:block}
+  .med{margin:0 0 50px !important;transform:none !important}
+  .m-w,.m-n,.m-f,.m-h{aspect-ratio:16/10 !important}
+  .m-v{aspect-ratio:9/16 !important;width:72%;margin-left:auto !important}
+  .m-v:nth-child(odd){margin-left:0 !important}
+  .sd-media .more{text-align:left}
+}
+
+/* ---- autres services ---- */
+.sd-next{
+  background:var(--noir-2);border-top:1px solid #1e1e1e;
+  padding:10vh 6vw 10vh;
+}
+.sd-next .sec-label{margin-bottom:5vh}
+.sd-next ul{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-left:1px solid #262626}
+.sd-next li a{
+  display:block;padding:26px 22px 30px;border-right:1px solid #262626;
+  border-top:1px solid #262626;border-bottom:1px solid #262626;
+  transition:background .3s;
+}
+.sd-next li a .num{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--gris);display:block}
+.sd-next li a .name{
+  display:block;margin-top:14px;
+  font-family:var(--anton);font-size:clamp(24px,2.6vw,40px);
+  text-transform:uppercase;color:var(--blanc);line-height:1;transition:.3s;
+}
+.sd-next li a .arrow{display:block;margin-top:22px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--rouge)}
+.sd-next li a:hover{background:var(--rouge)}
+.sd-next li a:hover .name,.sd-next li a:hover .num,.sd-next li a:hover .arrow{color:var(--noir)}
+@media(max-width:900px){
+  .sd-next ul{grid-template-columns:1fr 1fr}
+}
+@media(max-width:520px){.sd-next ul{grid-template-columns:1fr}}
+
+/* ---- accueil : lignes services cliquables ---- */
+.svc h3::after{
+  content:" →";color:var(--rouge);opacity:0;
+  display:inline-block;transform:translateX(-8px);
+  transition:.3s;
+}
+.svc:hover h3::after{opacity:1;transform:none;color:var(--noir)}

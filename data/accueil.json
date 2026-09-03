@@ -1,0 +1,69 @@
+{
+  "hero": {
+    "image": "/img/DSC00799.jpg",
+    "alt": "Tom Carvalho, portrait en montagne"
+  },
+  "manifeste": {
+    "image": "/img/portrait-tom.jpg",
+    "alt": "Tom Carvalho, portrait devant une Porsche GT3",
+    "legende": "Tom — 22 ans — Vidéaste"
+  },
+  "projets": [
+    {
+      "titre": "Aston V8 Vantage",
+      "type": "Automobile",
+      "image": "/img/DSC00203.jpg",
+      "alt": "Projet Aston V8 Vantage",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "titre": "TotalEnergies",
+      "type": "Institutionnel",
+      "image": "/img/DSC00884.jpg",
+      "alt": "Projet TotalEnergies",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "titre": "N.Joffre Le Mans",
+      "type": "Événementiel",
+      "image": "/img/DSC00899.jpg",
+      "alt": "Projet N.Joffre Le Mans",
+      "video": "",
+      "lien": ""
+    }
+  ],
+  "galerie": [
+    {
+      "image": "/img/DSC00912.jpg",
+      "alt": "Sourire au milieu du troupeau, Serra da Estrela",
+      "legende": "DSC00912 — Serra da Estrela",
+      "style": "polar"
+    },
+    {
+      "image": "/img/DSC00203.jpg",
+      "alt": "Col de montagne, repérage drone",
+      "legende": "DSC00203 — col de la Furka, repérage",
+      "style": "raw"
+    },
+    {
+      "image": "/img/DSC00884.jpg",
+      "alt": "Debout face au vent, radar au loin",
+      "legende": "DSC00884 — face au vent",
+      "style": "polar"
+    },
+    {
+      "image": "/img/DSC00899.jpg",
+      "alt": "Marche parmi les vaches au couchant",
+      "legende": "DSC00899 — entre deux prises",
+      "style": "raw"
+    },
+    {
+      "image": "/img/DSC00883.jpg",
+      "alt": "Silhouette dans la vallée",
+      "legende": "DSC00883 — plateau, 7h12",
+      "style": "raw"
+    }
+  ]
+}

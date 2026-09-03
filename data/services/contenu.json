@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "image": "/img/DSC00912.jpg",
+    "alt": "Tournage au milieu du troupeau, Serra da Estrela"
+  },
+  "periode": "2023 — 2026",
+  "medias": [
+    {
+      "format": "m-v",
+      "titre": "Face au vent",
+      "type": "Reel",
+      "image": "/img/DSC00884.jpg",
+      "alt": "Face au vent",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-v",
+      "titre": "Entre deux prises",
+      "type": "TikTok",
+      "image": "/img/DSC00899.jpg",
+      "alt": "Entre deux prises",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-v",
+      "titre": "Serra da Estrela",
+      "type": "Reel",
+      "image": "/img/DSC00912.jpg",
+      "alt": "Serra da Estrela",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Col de la Furka",
+      "type": "YouTube",
+      "image": "/img/DSC00203.jpg",
+      "alt": "Col de la Furka",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-n",
+      "titre": "Plateau, 7h12",
+      "type": "Short",
+      "image": "/img/DSC00883.jpg",
+      "alt": "Plateau, 7h12",
+      "video": "",
+      "lien": ""
+    }
+  ]
+}

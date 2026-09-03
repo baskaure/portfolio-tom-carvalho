@@ -1,0 +1,45 @@
+{
+  "hero": {
+    "image": "/img/DSC00883.jpg",
+    "alt": "Silhouette dans la vallée à contre-jour"
+  },
+  "periode": "2023 — 2026",
+  "medias": [
+    {
+      "format": "m-w",
+      "titre": "N.Joffre Le Mans",
+      "type": "Aftermovie",
+      "image": "/img/DSC00899.jpg",
+      "alt": "N.Joffre Le Mans",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-n",
+      "titre": "Dans la foule",
+      "type": "Teaser",
+      "image": "/img/DSC00912.jpg",
+      "alt": "Dans la foule",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-h",
+      "titre": "Face au vent",
+      "type": "Aftermovie",
+      "image": "/img/DSC00884.jpg",
+      "alt": "Face au vent",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-h",
+      "titre": "Col de la Furka",
+      "type": "Aftermovie",
+      "image": "/img/DSC00203.jpg",
+      "alt": "Col de la Furka",
+      "video": "",
+      "lien": ""
+    }
+  ]
+}

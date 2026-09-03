@@ -1,0 +1,54 @@
+{
+  "hero": {
+    "image": "/img/DSC09355.jpg",
+    "alt": "Portrait devant une Porsche GT3"
+  },
+  "periode": "2023 — 2026",
+  "medias": [
+    {
+      "format": "m-f",
+      "titre": "TotalEnergies",
+      "type": "Film de marque",
+      "image": "/img/DSC00884.jpg",
+      "alt": "TotalEnergies",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Repérage drone",
+      "type": "Corporate",
+      "image": "/img/DSC00203.jpg",
+      "alt": "Repérage drone",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-n",
+      "titre": "Interview",
+      "type": "Portrait",
+      "image": "/img/DSC00799.jpg",
+      "alt": "Portrait en montagne",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-h",
+      "titre": "Silhouette",
+      "type": "Recrutement",
+      "image": "/img/DSC00883.jpg",
+      "alt": "Silhouette dans la vallée",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "format": "m-h",
+      "titre": "Entre deux prises",
+      "type": "Film de marque",
+      "image": "/img/DSC00899.jpg",
+      "alt": "Entre deux prises",
+      "video": "",
+      "lien": ""
+    }
+  ]
+}
