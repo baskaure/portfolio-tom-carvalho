@@ -6,6 +6,30 @@
 <meta name="robots" content="noindex">
 <title>Admin — Tom Carvalho</title>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+// Contournement « Update is not a fast forward » (voir README, Dépannage).
+// L'edge Netlify met en cache les GET du proxy Git Gateway (/.netlify/git/…, en-tête cache-status
+// "Netlify Edge", clé de cache variant sur la query string). Decap relit le SHA de main via
+// GET /branches/main juste avant chaque commit : une réponse périmée fait refuser le commit par GitHub.
+// On ajoute un paramètre unique à chaque GET vers le gateway pour forcer un cache miss.
+(function () {
+  var origFetch = window.fetch;
+  window.fetch = function (input, init) {
+    try {
+      var isReq = typeof Request !== 'undefined' && input instanceof Request;
+      var url = isReq ? input.url : String(input);
+      var method = ((init && init.method) || (isReq ? input.method : 'GET')).toUpperCase();
+      if (method === 'GET' && url.indexOf('/.netlify/git/') !== -1) {
+        var u = new URL(url, location.origin);
+        u.searchParams.set('ts', Date.now().toString());
+        input = isReq ? new Request(u.toString(), input) : u.toString();
+        init = Object.assign({}, init, { cache: 'no-store' });
+      }
+    } catch (e) { /* on laisse passer la requête telle quelle */ }
+    return origFetch.call(this, input, init);
+  };
+})();
+</script>
 </head>
 <body>
 <script src="https://unpkg.com/decap-cms@3.16.0/dist/decap-cms.js"></script>

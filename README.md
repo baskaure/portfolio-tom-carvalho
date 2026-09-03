@@ -42,18 +42,22 @@ commitées dans `img/`.
 ### Dépannage
 
 **« Échec de l'enregistrement de l'entrée : API_ERROR: Update is not a fast forward »**
-Decap relit le SHA de `main` juste avant de committer. Git Gateway (proxy Netlify) renvoie parfois une valeur
-périmée pendant ~1 minute après un commit précédent (ex. un upload fait depuis l'onglet *Médias*, qui crée son
-propre commit). GitHub refuse alors le commit basé sur l'ancien SHA. Rien n'est perdu : le brouillon reste ouvert.
+Decap relit le SHA de `main` (`GET /branches/main`) juste avant chaque commit. Ce GET passe par le proxy Git
+Gateway, dont les réponses sont mises en cache par l'edge Netlify (en-tête `cache-status: "Netlify Edge"`,
+clé de cache variant sur la query string). Après un commit récent (upload depuis l'onglet *Médias*, `git push`
+du dev…), Decap reçoit un SHA périmé et GitHub refuse le commit. Rien n'est perdu : le brouillon reste ouvert.
 
-- Attendre une minute et cliquer à nouveau sur **Publier**.
-- Uploader les images **depuis le champ Image de l'entrée**, pas depuis l'onglet *Médias* : fichier et JSON
-  partent alors dans un seul commit et le problème ne se pose pas.
+`admin/index.html` contourne le problème : un petit script ajoute un paramètre unique (`?ts=`) à chaque GET vers
+`/.netlify/git/`, ce qui force un cache miss. Si l'erreur réapparaît malgré tout :
+
+- Attendre une minute et cliquer à nouveau sur **Publier** / relancer l'upload.
+- Uploader les images **depuis le champ Image de l'entrée** plutôt que depuis l'onglet *Médias* : fichier et
+  JSON partent alors dans un seul commit.
 - Côté dev : toujours `git pull` avant de pousser, les commits `admin: …` arrivent sur `main` sans passer par
   la copie locale. Ne jamais `push --force` sur `main`.
 
 **« API error » à l'upload d'une vidéo (ou d'une grosse image)**
-Git Gateway envoie le fichier en base64 à l'API GitHub et échoue au-delà d'environ 1 Mo (500 côté gateway,
+Git Gateway envoie le fichier en base64 à l'API GitHub et échoue au-delà de quelques Mo (500 côté gateway,
 Decap n'affiche qu'un « API error » générique). Pas de réglage possible côté site : compresser les images
 (< 1 Mo, 1600–2000 px suffisent) et héberger les vidéos hors du dépôt (URL directe .mp4).
 
