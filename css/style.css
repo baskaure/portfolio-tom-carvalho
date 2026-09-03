@@ -296,6 +296,7 @@ section{position:relative}
   border-top:1px solid #1e1e1e;
 }
 .work-head{position:relative;padding:0 6vw;margin-bottom:9vh}
+.work-head .sec-label{margin-bottom:22px}
 .work-head h2{
   font-size:clamp(70px,14vw,230px);
   margin-left:-0.03em;
@@ -407,6 +408,7 @@ section{position:relative}
 }
 .gallery .big{color:#141414}
 .gallery-head{position:relative;padding:0 1vw;margin-bottom:7vh}
+.gallery-head .sec-label{margin-bottom:22px}
 .gallery-head h2{
   font-size:clamp(64px,12.5vw,200px);
   margin-left:-0.03em;
