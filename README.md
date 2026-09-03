@@ -34,8 +34,44 @@ reste lisible. La source de vérité est le JSON.
 4. **Identity → Invite users** → inviter l'adresse de Tom. Le mail d'invitation ouvre le site, qui redirige vers `/admin`.
 5. Se connecter sur `https://<site>.netlify.app/admin/`.
 
-Vidéos : préférer un lien YouTube/Vimeo (champ *Lien*) ou un .mp4 court et compressé (< 20 Mo) dans le champ *Vidéo*
-(lecture muette au survol, l'image sert de vignette). Les fichiers uploadés sont commités dans `img/`.
+Vidéos : préférer un lien YouTube/Vimeo (champ *Lien*). Pour la lecture au survol (champ *Vidéo*), héberger le .mp4
+ailleurs (Cloudinary, Bunny.net, Cloudflare R2…) et coller son URL directe via **Insérer depuis une URL** dans la
+fenêtre média. L'upload direct d'une vidéo dans le dépôt ne passe pas (voir Dépannage). Les images uploadées sont
+commitées dans `img/`.
+
+### Dépannage
+
+**« Échec de l'enregistrement de l'entrée : API_ERROR: Update is not a fast forward »**
+Decap relit le SHA de `main` juste avant de committer. Git Gateway (proxy Netlify) renvoie parfois une valeur
+périmée pendant ~1 minute après un commit précédent (ex. un upload fait depuis l'onglet *Médias*, qui crée son
+propre commit). GitHub refuse alors le commit basé sur l'ancien SHA. Rien n'est perdu : le brouillon reste ouvert.
+
+- Attendre une minute et cliquer à nouveau sur **Publier**.
+- Uploader les images **depuis le champ Image de l'entrée**, pas depuis l'onglet *Médias* : fichier et JSON
+  partent alors dans un seul commit et le problème ne se pose pas.
+- Côté dev : toujours `git pull` avant de pousser, les commits `admin: …` arrivent sur `main` sans passer par
+  la copie locale. Ne jamais `push --force` sur `main`.
+
+**« API error » à l'upload d'une vidéo (ou d'une grosse image)**
+Git Gateway envoie le fichier en base64 à l'API GitHub et échoue au-delà d'environ 1 Mo (500 côté gateway,
+Decap n'affiche qu'un « API error » générique). Pas de réglage possible côté site : compresser les images
+(< 1 Mo, 1600–2000 px suffisent) et héberger les vidéos hors du dépôt (URL directe .mp4).
+
+**Git Gateway est déprécié par Netlify** (toujours fonctionnel, mais plus corrigé). Si les erreurs deviennent
+gênantes, passer au backend `github` : Tom a besoin d'un compte GitHub avec accès en écriture au dépôt, on crée
+une OAuth App GitHub (callback `https://api.netlify.com/auth/done`), on l'installe dans
+*Netlify → Access & security → OAuth → Install provider → GitHub*, puis dans `admin/config.yml` :
+
+```yaml
+backend:
+  name: github
+  repo: baskaure/portfolio-tom-carvalho
+  branch: main
+```
+
+Decap parle alors directement à l'API GitHub (plus de SHA périmé, upload jusqu'à ~100 Mo). Alternative sans
+compte GitHub pour Tom : stocker les médias hors Git via `media_library: { name: cloudinary }` (compte Cloudinary
+gratuit), ce qui supprime aussi les commits d'upload.
 
 ## Lancer
 
