@@ -12,7 +12,8 @@ admin/          — back-office Decap CMS (/admin)
 css/style.css   — tous les styles
 js/main.js      — reveals au scroll + bascule clair/sombre de la nav
 js/content.js   — injecte les médias de data/*.json dans les pages
-img/            — photos + texture halftone (les uploads de l'admin arrivent ici)
+img/            — photos + texture halftone (uploads images de l'admin)
+video/          — clips .mp4 uploadés via l'admin
 netlify.toml    — config Netlify
 ```
 

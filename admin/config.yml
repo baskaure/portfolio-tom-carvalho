@@ -51,7 +51,7 @@ collections:
               - { label: "Type", name: "type", widget: "string", hint: "Ex. Automobile, Institutionnel, Événementiel" }
               - { label: "Image (ou vignette si vidéo)", name: "image", widget: "image" }
               - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
-              - { label: "Vidéo (fichier .mp4, lecture au survol)", name: "video", widget: "file", required: false}
+              - { label: "Vidéo (fichier .mp4, lecture au survol)", name: "video", widget: "file", required: false, media_folder: "/video", public_folder: "/video", hint: "Court et compressé (< 20 Mo). Pour un film long, utiliser le champ Lien." }
               - { label: "Lien (YouTube, Vimeo, Instagram…)", name: "lien", widget: "string", required: false, hint: "Si rempli, le clic ouvre ce lien" }
           - label: "Galerie photo (section 03)"
             name: "galerie"
@@ -103,7 +103,7 @@ collections:
               - { label: "Type", name: "type", widget: "string", hint: "Ex. Reel, Film de marque, Aftermovie…" }
               - { label: "Image (ou vignette si vidéo)", name: "image", widget: "image" }
               - { label: "Texte alternatif", name: "alt", widget: "string", required: false }
-              - { label: "Vidéo (fichier .mp4, lecture au survol)", name: "video", widget: "file", required: false }
+              - { label: "Vidéo (fichier .mp4, lecture au survol)", name: "video", widget: "file", required: false, media_folder: "/video", public_folder: "/video", hint: "Court et compressé (< 20 Mo). Pour un film long, utiliser le champ Lien." }
               - { label: "Lien (YouTube, Vimeo, Instagram…)", name: "lien", widget: "string", required: false, hint: "Si rempli, le clic ouvre ce lien" }
       - { <<: *service, name: "institutionnel", label: "/02 Institutionnel", file: "data/services/institutionnel.json" }
       - { <<: *service, name: "aftermovies", label: "/03 Aftermovies", file: "data/services/aftermovies.json" }
