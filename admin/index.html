@@ -1,37 +1,50 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex">
-<title>Admin — Tom Carvalho</title>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-// Contournement « Update is not a fast forward » (voir README, Dépannage).
-// L'edge Netlify met en cache les GET du proxy Git Gateway (/.netlify/git/…, en-tête cache-status
-// "Netlify Edge", clé de cache variant sur la query string). Decap relit le SHA de main via
-// GET /branches/main juste avant chaque commit : une réponse périmée fait refuser le commit par GitHub.
-// On ajoute un paramètre unique à chaque GET vers le gateway pour forcer un cache miss.
-(function () {
-  var origFetch = window.fetch;
-  window.fetch = function (input, init) {
-    try {
-      var isReq = typeof Request !== 'undefined' && input instanceof Request;
-      var url = isReq ? input.url : String(input);
-      var method = ((init && init.method) || (isReq ? input.method : 'GET')).toUpperCase();
-      if (method === 'GET' && url.indexOf('/.netlify/git/') !== -1) {
-        var u = new URL(url, location.origin);
-        u.searchParams.set('ts', Date.now().toString());
-        input = isReq ? new Request(u.toString(), input) : u.toString();
-        init = Object.assign({}, init, { cache: 'no-store' });
-      }
-    } catch (e) { /* on laisse passer la requête telle quelle */ }
-    return origFetch.call(this, input, init);
-  };
-})();
-</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#181916">
+  <title>Le studio — Tom Carvalho</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Oswald:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/style.css">
+  <script defer src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script type="module" src="/admin/app.mjs"></script>
 </head>
 <body>
-<script src="https://unpkg.com/decap-cms@3.16.0/dist/decap-cms.js"></script>
+  <a class="skip" href="#editor">Aller au contenu</a>
+  <aside class="sidebar">
+    <a class="brand" href="/" target="_blank" rel="noopener"><span class="brand-mark">TC<span>®</span></span><span>TOM CARVALHO<small>LE STUDIO / ADMIN</small></span></a>
+    <p class="nav-label">TON PORTFOLIO</p>
+    <nav id="pages" aria-label="Pages du portfolio"></nav>
+    <div class="sidebar-bottom"><span class="small-dot"></span> L’envers du décor.<p>De belles images.<br>Un portfolio qui vit.</p><a href="/" target="_blank" rel="noopener">Voir le portfolio <span>↗</span></a></div>
+    <button id="logout" class="account" hidden><span class="avatar">T</span><span id="account-name">Tom</span><span class="logout-label">Déconnexion ↗</span></button>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span>ESPACE DE CRÉATION <span class="topbar-slash">/</span> <span id="breadcrumb">BIENVENUE</span></span><button id="mobile-logout" class="text-button" hidden>Déconnexion ↗</button><a href="/" target="_blank" rel="noopener">Portfolio ↗</a></header>
+    <main id="main">
+      <section id="login-screen" class="login-screen">
+        <span class="eyebrow">DERRIÈRE L’OBJECTIF</span><h1>À toi de<br>jouer, Tom<span>.</span></h1>
+        <p>Les derniers tournages, les nouvelles images.<br>Fais vivre ton portfolio depuis ton studio.</p>
+        <button id="login" class="primary">Entrer dans le studio <span>↗</span></button>
+        <p id="login-info" class="muted">Connexion réservée aux comptes invités.</p>
+        <div class="login-photo"><img src="/img/DSC00912.jpg" alt="Un aperçu des photographies de Tom"><span>LES IMAGES CHANGENT. LE REGARD RESTE.</span></div>
+      </section>
+      <section id="studio" hidden>
+        <div class="page-heading"><div><span class="eyebrow">LE STUDIO <span id="page-index">/ 01</span></span><h1 id="page-title">Accueil<span>.</span></h1><p id="page-description">Choisis les images qui donnent le ton.</p></div><div class="heading-actions"><button id="preview" class="secondary">Aperçu ↗</button><button id="publish" class="primary" disabled>Publier les changements <span>↑</span></button></div></div>
+        <div class="status-strip"><span id="save-status" role="status">Chargement…</span><span id="media-status">Vérification du stockage…</span></div>
+        <div id="notice" class="notice" role="alert" hidden></div>
+        <div id="draft-notice" class="draft-notice" hidden><p>Un brouillon est disponible sur cet appareil.</p><button id="restore-draft" class="secondary">Reprendre</button><button id="discard-draft" class="text-button">Supprimer le brouillon</button></div>
+        <div id="editor" tabindex="-1"></div>
+        <section id="imports" class="imports" aria-label="Imports en cours" hidden><div class="section-title"><h2>Les imports</h2><span>GARDE CET ONGLET OUVERT</span></div><ul id="upload-list" aria-live="polite"></ul></section>
+        <footer class="editor-footer"><p>Ton regard, tes images, ton rythme.</p><div><button id="export" class="text-button">Exporter le brouillon ↓</button><button id="reload" class="text-button">Recharger la version enregistrée ↻</button></div></footer>
+      </section>
+    </main>
+    <footer class="studio-footer"><span>TOM CARVALHO © <span id="year"></span></span><span>FAIT POUR CRÉER.</span></footer>
+  </div>
+  <dialog id="edit-dialog"><form id="item-form"><header><div><span class="eyebrow">LES DÉTAILS FONT L’IMAGE</span><h2 id="dialog-title">Modifier le projet</h2></div><button type="button" id="close-dialog" class="icon-button" aria-label="Fermer">×</button></header><div id="item-fields"></div><footer><button type="button" id="cancel-dialog" class="secondary">Annuler</button><button class="primary" type="submit">Garder les modifications ↗</button></footer></form></dialog>
+  <noscript>Active JavaScript pour ouvrir le studio.</noscript>
 </body>
 </html>

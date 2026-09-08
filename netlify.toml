@@ -1,8 +1,25 @@
 [build]
   publish = "."
+  functions = "netlify/functions"
 
-# pas de cache sur les données éditées via l'admin
+[build.environment]
+  NODE_VERSION = "22"
+
 [[headers]]
   for = "/data/*"
   [headers.values]
     Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+    X-Robots-Tag = "noindex, nofollow"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "same-origin"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-store"

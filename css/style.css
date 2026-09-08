@@ -810,3 +810,15 @@ footer .up:hover{color:var(--rouge)}
   transition:.3s;
 }
 .svc:hover h3::after{opacity:1;transform:none;color:var(--noir)}
+
+/* Imported films: same cover sizing as photos, with touch/keyboard playback. */
+.card .frame video{width:100%;height:100%;object-fit:cover;display:block}
+.card video[hidden],.med video[hidden]{display:none}
+.portfolio-video-dialog{border:0;padding:48px 16px 16px;background:#111;color:#f1efea;width:min(1100px,95vw);max-height:95dvh;margin:auto}
+.portfolio-video-dialog::backdrop{background:rgba(0,0,0,.88)}
+.portfolio-video-dialog video{display:block;width:100%;max-height:78dvh;background:#000}
+.video-close{position:absolute;right:16px;top:9px;background:transparent;color:#fff;border:1px solid #777;padding:7px 12px;cursor:pointer;font:13px var(--body)}
+.video-close:focus-visible{outline:2px solid white;outline-offset:3px}
+.video-error{padding:18px;font:14px var(--body)}
+.admin-preview-banner{position:fixed;bottom:0;left:0;right:0;background:#d6f46b;color:#181916;z-index:3000;padding:14px 22px;font:12px/1.5 var(--body);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 -3px 20px #0003}
+.admin-preview-banner a{text-decoration:underline}
