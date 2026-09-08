@@ -7,35 +7,26 @@
   "medias": [
     {
       "format": "m-n",
-      "titre": "Portrait GT3",
-      "type": "Portrait",
-      "image": "/img/DSC09355.jpg",
-      "alt": "Portrait devant une Porsche GT3",
-      "video": "",
-      "lien": ""
-    },
-    {
-      "format": "m-w",
-      "titre": "Col de la Furka",
-      "type": "Campagne",
-      "image": "/img/DSC00203.jpg",
-      "alt": "Col de montagne",
-      "video": "",
-      "lien": ""
-    },
-    {
-      "format": "m-n",
-      "titre": "Serra da Estrela",
-      "type": "Argentique",
+      "titre": "Shooting -  Textile",
+      "type": "Numérique",
       "image": "/img/DSC00912.jpg",
       "alt": "Serra da Estrela",
       "video": "",
       "lien": ""
     },
     {
+      "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1788911126/portfolio-tom/image/7306e994-ad73-4cb8-8496-09eb41b4cd63.jpg",
+      "titre": "Shooting -  Textile",
+      "type": "Numérique",
+      "alt": "DSC00864",
+      "lien": "",
       "format": "m-w",
-      "titre": "Entre deux prises",
-      "type": "Campagne",
+      "video": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Shooting - Textile",
+      "type": "Numérique",
       "image": "/img/DSC00899.jpg",
       "alt": "Marche parmi les vaches",
       "video": "",
@@ -43,8 +34,8 @@
     },
     {
       "format": "m-n",
-      "titre": "Face au vent",
-      "type": "Portrait",
+      "titre": "Shooting -  Textile",
+      "type": "Numérique",
       "image": "/img/DSC00884.jpg",
       "alt": "Face au vent",
       "video": "",
@@ -52,10 +43,28 @@
     },
     {
       "format": "m-w",
-      "titre": "Plateau, 7h12",
+      "titre": "Shooting -  Textile",
       "type": "Numérique",
       "image": "/img/DSC00883.jpg",
       "alt": "Silhouette dans la vallée",
+      "video": "",
+      "lien": ""
+    },
+    {
+      "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1788911139/portfolio-tom/image/556d854b-70a1-4958-aa4c-dd8801dacbe1.jpg",
+      "titre": "Shooting -  Textile",
+      "type": "Numérique",
+      "alt": "DSC00830",
+      "lien": "",
+      "format": "m-w",
+      "video": ""
+    },
+    {
+      "format": "m-w",
+      "titre": "Shooting -  Textile",
+      "type": "Numérique",
+      "image": "/img/DSC00203.jpg",
+      "alt": "Col de montagne",
       "video": "",
       "lien": ""
     }
