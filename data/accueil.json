@@ -26,6 +26,14 @@
       "lien": ""
     },
     {
+      "video": "https://res.cloudinary.com/x59xsxis/video/upload/f_mp4,vc_h264,q_auto/v1788878548/portfolio-tom/video/de54fb80-33ba-43a1-a449-3b2f2be5c99e.mp4",
+      "image": "https://res.cloudinary.com/x59xsxis/video/upload/so_0,f_jpg,q_auto,w_1600,c_limit/v1788878548/portfolio-tom/video/de54fb80-33ba-43a1-a449-3b2f2be5c99e.jpg",
+      "titre": "TEST v2",
+      "type": "Film",
+      "alt": "TEST v2",
+      "lien": ""
+    },
+    {
       "titre": "N.Joffre Le Mans",
       "type": "Événementiel",
       "image": "/img/DSC00899.jpg",
