@@ -619,6 +619,12 @@ footer{
   text-transform:uppercase;color:#555;
   flex-wrap:wrap;
 }
+.madaria-link{
+  display:inline-block;line-height:0;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1), filter .3s;
+}
+.madaria-link:hover{transform:scale(1.05)}
+.madaria-link:focus-visible{outline:2px solid var(--rouge);outline-offset:6px}
 .madaria{
   display:block;height:58px;width:auto;
   transform:rotate(-2deg);
