@@ -38,7 +38,7 @@ const output = require('node:os').tmpdir();
   assert.equal(await page.locator('[data-section="projets"] .media-card').count(),3);
   await page.screenshot({path:`${output}/tom-admin-desktop.png`,fullPage:true});
   const chooser = page.waitForEvent('filechooser'); await page.locator('[data-action="upload"][data-list="projets"]').click();
-  await (await chooser).setFiles([`${root}/img/DSC00203.jpg`,`${root}/img/DSC00884.jpg`]);
+  await (await chooser).setFiles([`${root}/img/DSC00203.jpg`,`${root}/img/DSC00912.jpg`]);
   await page.waitForFunction(()=>document.querySelectorAll('[data-section="projets"] .media-card').length===5);
   await page.waitForFunction(()=>document.querySelectorAll('.upload-row').length===2 && [...document.querySelectorAll('.upload-detail')].every(e=>e.textContent.includes('Prêt')));
   assert.equal(writes.length,0,'photos must not publish before explicit action');

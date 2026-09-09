@@ -36,22 +36,10 @@
   ],
   "galerie": [
     {
-      "image": "/img/DSC00912.jpg",
-      "alt": "Sourire au milieu du troupeau, Serra da Estrela",
-      "legende": "DSC00912 — Serra da Estrela",
-      "style": "polar"
-    },
-    {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1788888047/portfolio-tom/image/a222f87e-b51d-4c5e-91f6-bd1a2a3be071.jpg",
       "legende": "DSC00864",
       "alt": "DSC00864",
       "style": "raw"
-    },
-    {
-      "image": "/img/DSC00884.jpg",
-      "alt": "Debout face au vent, radar au loin",
-      "legende": "DSC00884 — face au vent",
-      "style": "polar"
     },
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1788878468/portfolio-tom/image/6514e795-b6b2-4ed9-9c15-66f799d7a3a1.jpg",

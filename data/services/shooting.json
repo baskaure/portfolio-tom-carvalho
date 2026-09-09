@@ -6,15 +6,6 @@
   "periode": "2023 — 2026",
   "medias": [
     {
-      "format": "m-n",
-      "titre": "Shooting -  Textile",
-      "type": "Numérique",
-      "image": "/img/DSC00912.jpg",
-      "alt": "Serra da Estrela",
-      "video": "",
-      "lien": ""
-    },
-    {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1788911126/portfolio-tom/image/7306e994-ad73-4cb8-8496-09eb41b4cd63.jpg",
       "titre": "Shooting -  Textile",
       "type": "Numérique",
@@ -22,33 +13,6 @@
       "lien": "",
       "format": "m-w",
       "video": ""
-    },
-    {
-      "format": "m-w",
-      "titre": "Shooting - Textile",
-      "type": "Numérique",
-      "image": "/img/DSC00899.jpg",
-      "alt": "Marche parmi les vaches",
-      "video": "",
-      "lien": ""
-    },
-    {
-      "format": "m-n",
-      "titre": "Shooting -  Textile",
-      "type": "Numérique",
-      "image": "/img/DSC00884.jpg",
-      "alt": "Face au vent",
-      "video": "",
-      "lien": ""
-    },
-    {
-      "format": "m-w",
-      "titre": "Shooting -  Textile",
-      "type": "Numérique",
-      "image": "/img/DSC00883.jpg",
-      "alt": "Silhouette dans la vallée",
-      "video": "",
-      "lien": ""
     },
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1788911139/portfolio-tom/image/556d854b-70a1-4958-aa4c-dd8801dacbe1.jpg",
