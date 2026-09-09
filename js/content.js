@@ -32,8 +32,11 @@
   };
   const mediaTag = item => {
     const image = imageURL(item.image); const video = safeURL(item.video);
-    return video ? `<video src="${esc(video)}" poster="${esc(image)}" muted loop playsinline preload="none" aria-label="${esc(item.alt || item.titre)}"></video>`
-      : `<img src="${esc(image)}" alt="${esc(item.alt || item.titre)}" loading="lazy" decoding="async">`;
+    if (!video) return `<img src="${esc(image)}" alt="${esc(item.alt || item.titre)}" loading="lazy" decoding="async">`;
+    // poster "auto" : aucune image de couverture, le navigateur affiche le premier plan du film
+    const auto = item.poster === 'auto';
+    const cover = auto || !image ? 'preload="metadata"' : `poster="${esc(image)}" preload="none"`;
+    return `<video src="${esc(video)}" ${cover} data-image="${esc(image)}" muted loop playsinline aria-label="${esc(item.alt || item.titre)}"></video>`;
   };
   const linkAttrs = (item, lightbox = false) => {
     const link = safeURL(item.lien); const video = safeURL(item.video); const image = imageURL(item.image);
@@ -64,7 +67,17 @@
     const grid = document.querySelector('.sd-media .grid');
     const formats = ['m-w', 'm-n', 'm-v', 'm-h', 'm-f'];
     if (grid && Array.isArray(d.medias)) {
-      grid.innerHTML = d.medias.map((item, i) => `<a class="med ${formats.includes(item.format) ? item.format : 'm-w'} sr" ${linkAttrs(item, true)}><div class="ht">${mediaTag(item)}<div class="tint"></div></div><span class="idx">${String(i + 1).padStart(2, '0')}</span>${safeURL(item.video) || safeURL(item.lien) ? '<span class="play" aria-hidden="true"></span>' : ''}<div class="meta"><h3>${esc(item.titre)}</h3><span class="kind">${esc(item.type)}</span></div></a>`).join('') +
+      const medTag = item => `<a class="med ${formats.includes(item.format) ? item.format : 'm-w'} sr" ${linkAttrs(item, true)}><div class="ht">${mediaTag(item)}<div class="tint"></div></div>${safeURL(item.video) || safeURL(item.lien) ? '<span class="play" aria-hidden="true"></span>' : ''}</a>`;
+      // catégories numérotées (créées dans l'admin) : les médias sans catégorie viennent d'abord,
+      // puis chaque catégorie dans l'ordre choisi. Une catégorie vide n'est pas affichée et la
+      // numérotation reste continue (01, 02, 03…) sur la page.
+      const categories = (Array.isArray(d.categories) ? d.categories : []).filter(c => c && typeof c.id === 'string' && c.id);
+      const ids = new Set(categories.map(c => c.id));
+      const loose = d.medias.filter(item => !ids.has(item.categorie));
+      const blocks = categories.map(cat => ({ cat, items: d.medias.filter(item => item.categorie === cat.id) })).filter(b => b.items.length)
+        .map((b, i) => ({ ...b, num: String(i + 1).padStart(2, '0') }));
+      grid.innerHTML = loose.map(medTag).join('') +
+        blocks.map(b => `<div class="cat-head sr"><span class="cat-num">${b.num}</span><h3>${esc(b.cat.titre)}</h3><span class="cat-count">${String(b.items.length).padStart(2, '0')} ${b.items.length > 1 ? 'contenus' : 'contenu'}</span></div>` + b.items.map(medTag).join('')).join('') +
         '<p class="more sr">Envie d’en voir plus ?<br><a href="#contact">contactez-moi →</a></p>';
       reveal(grid);
     }
@@ -97,7 +110,8 @@
     video.addEventListener('error', () => {
       if (video.dataset.fallback) return;
       video.dataset.fallback = 'true';
-      const img = document.createElement('img'); img.src = video.poster; img.alt = video.getAttribute('aria-label') || ''; video.hidden = true; video.after(img);
+      const still = video.poster || video.dataset.image; if (!still) return;
+      const img = document.createElement('img'); img.src = still; img.alt = video.getAttribute('aria-label') || ''; video.hidden = true; video.after(img);
     });
   });
   // lightbox : les photos (services, projets, galerie) s'ouvrent en grand au clic
@@ -113,7 +127,7 @@
     const img = card.querySelector('.ht img'); if (!img) return;
     event.preventDefault();
     lightboxImg.src = card.getAttribute('href') || img.currentSrc || img.src; lightboxImg.alt = img.alt || '';
-    lightboxCap.textContent = card.querySelector('h3, .cap')?.textContent || '';
+    lightboxCap.textContent = card.querySelector('h3, .cap')?.textContent?.trim() || img.alt || '';
     lightbox.showModal();
   };
   document.querySelectorAll('[data-lightbox]').forEach(card => {

@@ -44,6 +44,18 @@ test('empty lists are valid; missing images and unsafe links are rejected', () =
   assert.deepEqual(validatePage('accueil', { ...original, galerie: [], projets: [] }), []);
   const bad = structuredClone(original); bad.hero.image = ''; bad.projets[0].lien = 'javascript:alert(1)'; assert.equal(validatePage('accueil', bad).length, 2);
 });
+test('numbered categories are validated on service pages', () => {
+  const page = { hero: { image: '/img/a.jpg', alt: '' }, periode: '2024', categories: [{ id: 'c-1', titre: 'Portraits' }, { id: 'c-2', titre: 'Automobile' }],
+    medias: [{ titre: 'A', image: '/img/a.jpg', categorie: 'c-1' }, { titre: 'B', image: '/img/b.jpg', categorie: '' }, { titre: 'C', image: '/img/c.jpg' }] };
+  assert.deepEqual(validatePage('shooting', page), []);
+  // Pages published before categories existed carry neither the list nor the field.
+  assert.deepEqual(validatePage('shooting', { ...page, categories: undefined, medias: page.medias.slice(1) }), []);
+  const bad = structuredClone(page); bad.categories[1].titre = ' '; bad.categories.push({ id: 'c-1', titre: 'Doublon' }); bad.medias[0].categorie = 'c-supprimee';
+  const errors = validatePage('shooting', bad);
+  assert.equal(errors.length, 3); assert.match(errors[0], /Catégorie 2 : donne-lui un nom/); assert.match(errors[1], /Catégorie 3 : identifiant en double/); assert.match(errors[2], /Projet 1 : sa catégorie n’existe plus/);
+  // A broken list also orphans every media that pointed into it.
+  assert.deepEqual(validatePage('shooting', { ...page, categories: 'oops' }).map(e => e.split(' :')[0]), ['La liste des catégories est invalide.', 'Projet 1']);
+});
 test('JSON and referenced photos are committed atomically without forcing main', async () => {
   const data = structuredClone(changed); data.hero.image = '/img/uploads/photo-1.webp';
   const mock = gateway({ assets: true });

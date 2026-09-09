@@ -87,6 +87,14 @@ function cover(key, title, description) {
   const item = state.data[key] || {};
   return `<article class="cover-card"><div class="cover-photo"><img src="${esc(previewImage(item.image))}" alt="${esc(item.alt || title)}"></div><div class="cover-copy"><h3>${title}</h3><p>${description}</p><button class="secondary" data-action="edit" data-list="${key}">Modifier la photo ↗</button></div></article>`;
 }
+const num = index => String(index + 1).padStart(2, '0'); const pad = n => String(n).padStart(2, '0');
+const categories = () => (Array.isArray(state.data?.categories) ? state.data.categories : []);
+const categoryLabel = id => { const i = categories().findIndex(cat => cat.id === id); return i < 0 ? '' : `${num(i)} · ${categories()[i].titre || 'Sans nom'}`; };
+function categorySection(number) {
+  const list = categories(); const used = id => state.data.medias.filter(item => item.categorie === id).length;
+  const rows = list.map((cat, index) => `<li class="cat-row"><span class="cat-index">${num(index)}</span><input data-cat="title" data-index="${index}" value="${esc(cat.titre)}" maxlength="80" placeholder="Nom de la catégorie" aria-label="Nom de la catégorie ${index + 1}"><span class="cat-usage">${used(cat.id) ? `${pad(used(cat.id))} média${used(cat.id) > 1 ? 's' : ''}` : 'aucun média'}</span><button class="icon-button" data-cat="up" data-index="${index}" aria-label="Monter la catégorie ${index + 1}" ${index === 0 ? 'disabled' : ''}>↑</button><button class="icon-button" data-cat="down" data-index="${index}" aria-label="Descendre la catégorie ${index + 1}" ${index === list.length - 1 ? 'disabled' : ''}>↓</button><button class="icon-button delete" data-cat="delete" data-index="${index}" aria-label="Supprimer la catégorie ${index + 1}">×</button></li>`).join('');
+  return `<section class="section" data-section="categories"><div class="section-title"><h2><span class="section-number">${number}</span>Les catégories</h2><div class="section-tools"><span class="count">${pad(list.length)} CATÉGORIE${list.length > 1 ? 'S' : ''}</span><button class="text-button" data-cat="add">Ajouter une catégorie ↗</button></div></div><p class="section-intro">Chaque catégorie est numérotée dans l’ordre ci-dessous et apparaît sur la page avec ses médias. Pour y ranger un média, ouvre-le avec « Modifier » et choisis sa catégorie. Une catégorie sans média n’apparaît pas sur la page.</p>${list.length ? `<ol class="cat-list">${rows}</ol>` : '<div class="empty">Aucune catégorie pour l’instant. Ajoute-en une pour regrouper tes médias sous un numéro.</div>'}</section>`;
+}
 function listSection(key, title, number) {
   const list = state.data[key] || [];
   const photos = key === 'galerie';
@@ -94,12 +102,12 @@ function listSection(key, title, number) {
 }
 function card(item, index, key) {
   const title = item.titre || item.legende || 'Sans titre';
-  return `<article class="media-card"><div class="card-image"><img src="${esc(previewImage(item.image))}" alt="${esc(item.alt || title)}" loading="lazy"><span class="media-type">${item.video ? '▶ VIDÉO' : '↗ PHOTO'}</span><span class="media-position">${String(index + 1).padStart(2, '0')}</span></div><div class="card-body"><h3>${esc(title)}</h3><p>${esc(item.type || (item.style === 'polar' ? 'Polaroid' : 'Photographie'))}</p><div class="card-actions"><button class="edit" data-action="edit" data-list="${key}" data-index="${index}" aria-label="Modifier ${esc(title)}">Modifier ↗</button><button class="icon-button" data-action="up" data-list="${key}" data-index="${index}" aria-label="Monter ${esc(title)}" ${index === 0 ? 'disabled' : ''}>↑</button><button class="icon-button" data-action="down" data-list="${key}" data-index="${index}" aria-label="Descendre ${esc(title)}" ${index === state.data[key].length - 1 ? 'disabled' : ''}>↓</button><button class="icon-button delete" data-action="delete" data-list="${key}" data-index="${index}" aria-label="Retirer ${esc(title)}">×</button></div></div></article>`;
+  return `<article class="media-card"><div class="card-image"><img src="${esc(previewImage(item.image))}" alt="${esc(item.alt || title)}" loading="lazy"><span class="media-type">${item.video ? '▶ VIDÉO' : '↗ PHOTO'}</span><span class="media-position">${String(index + 1).padStart(2, '0')}</span></div><div class="card-body"><h3>${esc(title)}</h3><p>${esc(item.type || (item.style === 'polar' ? 'Polaroid' : 'Photographie'))}${key === 'medias' && categoryLabel(item.categorie) ? ` · <span data-cat-label="${esc(item.categorie)}">${esc(categoryLabel(item.categorie))}</span>` : ''}</p><div class="card-actions"><button class="edit" data-action="edit" data-list="${key}" data-index="${index}" aria-label="Modifier ${esc(title)}">Modifier ↗</button><button class="icon-button" data-action="up" data-list="${key}" data-index="${index}" aria-label="Monter ${esc(title)}" ${index === 0 ? 'disabled' : ''}>↑</button><button class="icon-button" data-action="down" data-list="${key}" data-index="${index}" aria-label="Descendre ${esc(title)}" ${index === state.data[key].length - 1 ? 'disabled' : ''}>↓</button><button class="icon-button delete" data-action="delete" data-list="${key}" data-index="${index}" aria-label="Retirer ${esc(title)}">×</button></div></div></article>`;
 }
 function renderEditor() {
   if (!state.data) { $('#editor').innerHTML = ''; return; }
   $('#editor').innerHTML = `<section class="section"><div class="section-title"><h2><span class="section-number">01</span>Le premier regard</h2><span>LES IMAGES D’OUVERTURE</span></div><div class="cover-grid">${cover('hero', 'La couverture', 'La première image que l’on découvre.')}${state.page === 'accueil' ? cover('manifeste', 'Le portrait', 'Toi, derrière la caméra.') : ''}</div></section>` +
-    (state.page === 'accueil' ? listSection('projets', 'Les projets à l’affiche', '02') + listSection('galerie', 'Les instants à partager', '03') : `<section class="section"><label class="period-field">Période affichée <input id="period" value="${esc(state.data.periode)}" maxlength="80"></label></section>` + listSection('medias', 'Les réalisations', '02'));
+    (state.page === 'accueil' ? listSection('projets', 'Les projets à l’affiche', '02') + listSection('galerie', 'Les instants à partager', '03') : `<section class="section"><label class="period-field">Période affichée <input id="period" value="${esc(state.data.periode)}" maxlength="80"></label></section>` + categorySection('02') + listSection('medias', 'Les réalisations', '03'));
   $('#period')?.addEventListener('input', event => { state.data.periode = event.target.value; markDirty(); });
   document.querySelectorAll('[data-drop]').forEach(zone => {
     zone.addEventListener('dragover', event => { event.preventDefault(); if (!state.busy && !activeJobs()) zone.classList.add('drag-over'); });
@@ -114,6 +122,36 @@ $('#editor').addEventListener('error', event => {
     const label = document.createElement('span'); label.className = 'error-placeholder'; label.textContent = 'Image indisponible · remplace-la'; event.target.parentElement.append(label);
   }
 }, true);
+$('#editor').addEventListener('input', event => {
+  if (event.target.dataset.cat !== 'title') return;
+  const index = Number(event.target.dataset.index); const cat = categories()[index]; if (!cat) return;
+  cat.titre = event.target.value;
+  document.querySelectorAll(`[data-cat-label="${CSS.escape(cat.id)}"]`).forEach(label => { label.textContent = categoryLabel(cat.id); });
+  markDirty();
+});
+$('#editor').addEventListener('click', event => {
+  const button = event.target.closest('button[data-cat]');
+  if (!button || state.busy || activeJobs()) return;
+  const action = button.dataset.cat; const index = Number(button.dataset.index); const list = categories();
+  if (action === 'add') {
+    if (!Array.isArray(state.data.categories)) state.data.categories = [];
+    state.data.categories.push({ id: `c-${crypto.randomUUID().slice(0, 8)}`, titre: '' });
+    markDirty(); renderEditor();
+    const inputs = document.querySelectorAll('[data-cat="title"]'); inputs[inputs.length - 1]?.focus();
+    return;
+  }
+  if (action === 'delete') {
+    const cat = list[index]; const count = state.data.medias.filter(item => item.categorie === cat.id).length;
+    if (!confirm(`Supprimer la catégorie « ${cat.titre || 'sans nom'} » ?${count ? ` ${count} média${count > 1 ? 's resteront visibles' : ' restera visible'} sans catégorie.` : ''}`)) return;
+    state.data.medias.forEach(item => { if (item.categorie === cat.id) item.categorie = ''; });
+    list.splice(index, 1);
+  } else {
+    const next = index + (action === 'up' ? -1 : 1);
+    if (next < 0 || next >= list.length) return;
+    [list[index], list[next]] = [list[next], list[index]];
+  }
+  markDirty(); renderEditor();
+});
 $('#editor').addEventListener('click', event => {
   const button = event.target.closest('[data-action]');
   if (!button || state.busy || activeJobs()) return;
@@ -135,16 +173,17 @@ const field = (name, label, value, hint = '', required = false) => `<label class
 const select = (name, label, value, options) => `<label class="field">${label}<select name="${name}">${options.map(([key, text]) => `<option value="${key}" ${value === key ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
 function openEditor(list, index, isNew = false) {
   const single = ['hero', 'manifeste'].includes(list); const gallery = list === 'galerie';
-  const item = isNew ? { titre: 'Nouveau projet', legende: 'Nouvelle photo', image: '', alt: '', video: '', lien: '', type: '', format: 'm-w', style: 'raw' } : clone(single ? state.data[list] : state.data[list][index]);
+  const item = isNew ? { titre: 'Nouveau projet', legende: 'Nouvelle photo', image: '', alt: '', video: '', lien: '', type: '', format: 'm-w', style: 'raw', poster: 'photo', categorie: '' } : clone(single ? state.data[list] : state.data[list][index]);
   state.dialog = { list, index, item, isNew, single };
   $('#dialog-title').textContent = single ? 'Changer le premier regard' : gallery ? 'Modifier la photographie' : 'Modifier le projet';
   $('#item-fields').innerHTML = `${item.image ? `<img class="dialog-preview" src="${esc(previewImage(item.image))}" alt="Aperçu du média">` : ''}<div class="dialog-upload"><button type="button" class="secondary" id="replace-image">Importer une ${single || gallery ? 'photo' : 'vignette'} ↑</button>${!single && !gallery ? '<button type="button" class="secondary" id="replace-video">Importer une vidéo ↑</button>' : ''}</div>` +
-    (!single && !gallery ? `<div class="field-row">${field('titre', 'Titre', item.titre, '', true)}${field('type', 'Catégorie', item.type, 'Ex. Film de marque, Reel, Automobile…')}</div>` : '') +
+    (!single && !gallery ? `<div class="field-row">${field('titre', 'Titre', item.titre, '', true)}${field('type', 'Type', item.type, 'Ex. Film de marque, Reel, Automobile…')}</div>` : '') +
     (gallery || list === 'manifeste' ? field('legende', 'Légende', item.legende, '', true) : '') +
     field('image', 'Adresse de la photo', item.image, 'L’import remplit ce champ automatiquement. Une URL HTTPS ou un chemin /img/… fonctionne aussi.') +
     field('alt', 'Description de l’image', item.alt, 'Quelques mots pour les personnes qui ne peuvent pas voir la photo.') +
-    (!single && !gallery ? field('video', 'Adresse de la vidéo', item.video, 'Fichier vidéo direct en HTTPS. Laisse vide pour afficher uniquement la photo.') + field('lien', 'Lien au clic (facultatif)', item.lien, 'YouTube, Vimeo, Instagram… Sans lien, le clic ouvre la vidéo importée.') : '') +
-    (gallery ? select('style', 'Présentation', item.style, [['raw','Photo brute'],['polar','Polaroid']]) : '');
+    (!single && !gallery ? field('video', 'Adresse de la vidéo', item.video, 'Fichier vidéo direct en HTTPS. Laisse vide pour afficher uniquement la photo.') + field('lien', 'Lien au clic (facultatif)', item.lien, 'YouTube, Vimeo, Instagram… Sans lien, le clic ouvre la vidéo importée.') + select('poster', 'Image d’attente de la vidéo', item.poster === 'auto' ? 'auto' : 'photo', [['photo', 'La photo ci-dessus'], ['auto', 'Le premier plan de la vidéo']]) : '') +
+    (gallery ? select('style', 'Présentation', item.style, [['raw','Photo brute'],['polar','Polaroid']]) : '') +
+    (list === 'medias' ? select('categorie', 'Catégorie numérotée', categories().some(cat => cat.id === item.categorie) ? item.categorie : '', [['', 'Aucune — affiché en tête de page'], ...categories().map((cat, i) => [cat.id, `${num(i)} — ${cat.titre || 'Sans nom'}`])]) + (categories().length ? '' : '<p class="field-note">Crée d’abord des catégories dans la section « Les catégories » pour pouvoir y ranger ce média.</p>') : '');
   $('#replace-image').onclick = () => chooseFiles(list, 'image', true);
   if ($('#replace-video')) $('#replace-video').onclick = () => chooseFiles(list, 'video', true);
   $('#edit-dialog').showModal();
@@ -211,7 +250,7 @@ async function runJobs() {
         if (job.target) Object.assign(job.target, result);
         else {
           const title = job.file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
-          state.data[job.list].push(job.list === 'galerie' ? { ...result, legende: title, alt: title, style: 'raw' } : { ...result, titre: title, type: kind === 'video' ? 'Film' : 'Photographie', alt: title, lien: '', ...(job.list === 'medias' ? { format: 'm-w' } : {}) });
+          state.data[job.list].push(job.list === 'galerie' ? { ...result, legende: title, alt: title, style: 'raw' } : { ...result, titre: title, type: kind === 'video' ? 'Film' : 'Photographie', alt: title, lien: '', poster: 'photo', ...(job.list === 'medias' ? { format: 'm-w', categorie: '' } : {}) });
         }
         job.status = 'done'; job.progress = 100; job.message = 'Prêt dans le brouillon · à publier'; job.file = null;
         markDirty(); await saveDraft(); renderEditor();

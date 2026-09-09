@@ -31,13 +31,23 @@ export function validatePage(page, data) {
   };
   checkMedia(data?.hero, 'Photo de couverture', false);
   if (page === 'accueil') checkMedia(data?.manifeste, 'Portrait', false);
+  const categoryIds = new Set();
+  if (page !== 'accueil' && data?.categories !== undefined) {
+    if (!Array.isArray(data.categories)) errors.push('La liste des catégories est invalide.');
+    else data.categories.forEach((cat, i) => {
+      if (!cat || typeof cat.id !== 'string' || !cat.id) errors.push(`Catégorie ${i + 1} : identifiant manquant.`);
+      else if (categoryIds.has(cat.id)) errors.push(`Catégorie ${i + 1} : identifiant en double.`);
+      else categoryIds.add(cat.id);
+      if (!cat?.titre?.trim()) errors.push(`Catégorie ${i + 1} : donne-lui un nom.`);
+    });
+  }
   for (const key of page === 'accueil' ? ['projets', 'galerie'] : ['medias']) {
     if (!Array.isArray(data?.[key])) { errors.push(`La liste ${key} est invalide.`); continue; }
     data[key].forEach((item, i) => {
       const label = `${key === 'galerie' ? 'Photo' : 'Projet'} ${i + 1}`;
       checkMedia(item, label, key !== 'galerie');
       if (!(key === 'galerie' ? item.legende : item.titre)?.trim()) errors.push(`${label} : renseigne ${key === 'galerie' ? 'une légende' : 'un titre'}.`);
-      if (key === 'medias' && !['m-w', 'm-n', 'm-v', 'm-h', 'm-f'].includes(item.format)) errors.push(`${label} : choisis un format valide.`);
+      if (key === 'medias' && item.categorie && !categoryIds.has(item.categorie)) errors.push(`${label} : sa catégorie n’existe plus, choisis-en une autre.`);
     });
   }
   return errors;
