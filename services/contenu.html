@@ -54,7 +54,8 @@
        <img src="../img/xxx.jpg" alt="…">
      ou
        <video src="../video/xxx.mp4" poster="../img/xxx.jpg" muted loop playsinline></video>
-     Formats : m-w (large 16/10) · m-n (4/5) · m-v (vertical 9/16) · m-h (16/9) · m-f (pleine largeur 21/9)
+     Tous les emplacements sont affichés au même format 16/9 paysage (les classes m-* sont ignorées).
+     Une photo sans vidéo ni lien s'ouvre en grand au clic (href = l'image + data-lightbox).
      ============================================ -->
 <section class="sd-media">
   <div class="head">
@@ -63,7 +64,7 @@
   </div>
 
   <div class="grid">
-    <a class="med m-v sr" href="#">
+    <a class="med m-v sr" href="../img/DSC00884.jpg" data-lightbox="true">
       <div class="ht">
         <img src="../img/DSC00884.jpg" alt="Face au vent">
         <div class="tint"></div>
@@ -73,7 +74,7 @@
       <div class="meta"><h3>Face au vent</h3><span class="kind">Reel</span></div>
     </a>
 
-    <a class="med m-v sr" href="#">
+    <a class="med m-v sr" href="../img/DSC00899.jpg" data-lightbox="true">
       <div class="ht">
         <img src="../img/DSC00899.jpg" alt="Entre deux prises">
         <div class="tint"></div>
@@ -83,7 +84,7 @@
       <div class="meta"><h3>Entre deux prises</h3><span class="kind">TikTok</span></div>
     </a>
 
-    <a class="med m-v sr" href="#">
+    <a class="med m-v sr" href="../img/DSC00912.jpg" data-lightbox="true">
       <div class="ht">
         <img src="../img/DSC00912.jpg" alt="Serra da Estrela">
         <div class="tint"></div>
@@ -93,7 +94,7 @@
       <div class="meta"><h3>Serra da Estrela</h3><span class="kind">Reel</span></div>
     </a>
 
-    <a class="med m-w sr" href="#">
+    <a class="med m-w sr" href="../img/DSC00203.jpg" data-lightbox="true">
       <div class="ht">
         <img src="../img/DSC00203.jpg" alt="Col de la Furka">
         <div class="tint"></div>
@@ -103,7 +104,7 @@
       <div class="meta"><h3>Col de la Furka</h3><span class="kind">YouTube</span></div>
     </a>
 
-    <a class="med m-n sr" href="#">
+    <a class="med m-n sr" href="../img/DSC00883.jpg" data-lightbox="true">
       <div class="ht">
         <img src="../img/DSC00883.jpg" alt="Plateau, 7h12">
         <div class="tint"></div>
@@ -141,6 +142,22 @@
   <p class="contact-sub sr sr-d2">Une envie, un projet, une idée floue à 3h du matin — envoie, on en fait quelque chose. Basé à Paris, disponible partout en France.</p>
 
   <a class="contact-mail sr sr-d3" href="mailto:tom.fj.carvalho@gmail.com">tom.fj.carvalho@gmail.com</a>
+
+  <form class="contact-form sr sr-d3" name="contact" method="POST" action="/" data-netlify="true" netlify-honeypot="bot-field">
+    <input type="hidden" name="form-name" value="contact">
+    <input type="hidden" name="page" value="Contenu">
+    <p class="cf-trap" aria-hidden="true"><label>Ne pas remplir : <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <div class="cf-row">
+      <label class="cf-field">Nom<input type="text" name="nom" required autocomplete="name" maxlength="120"></label>
+      <label class="cf-field">Email<input type="email" name="email" required autocomplete="email" maxlength="200"></label>
+    </div>
+    <label class="cf-field">Projet<input type="text" name="projet" maxlength="200" placeholder="Film de marque, aftermovie, shooting, étalonnage…"></label>
+    <label class="cf-field">Message<textarea name="message" required rows="5" maxlength="4000" placeholder="Raconte-moi l'idée, même floue."></textarea></label>
+    <div class="cf-actions">
+      <button type="submit">Envoyer →</button>
+      <p class="cf-status" role="status" aria-live="polite"></p>
+    </div>
+  </form>
 
   <div class="contact-coords sr">
     <a href="https://www.instagram.com/crv.tom" target="_blank" rel="noopener"><b>@crv.tom</b></a><br>

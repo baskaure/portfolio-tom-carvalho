@@ -35,10 +35,11 @@
     return video ? `<video src="${esc(video)}" poster="${esc(image)}" muted loop playsinline preload="none" aria-label="${esc(item.alt || item.titre)}"></video>`
       : `<img src="${esc(image)}" alt="${esc(item.alt || item.titre)}" loading="lazy" decoding="async">`;
   };
-  const linkAttrs = item => {
-    const link = safeURL(item.lien); const video = safeURL(item.video);
+  const linkAttrs = (item, lightbox = false) => {
+    const link = safeURL(item.lien); const video = safeURL(item.video); const image = imageURL(item.image);
     if (link) return `href="${esc(link)}" target="_blank" rel="noopener noreferrer"`;
     if (video) return `href="${esc(video)}" data-play-video="true" aria-label="Lire ${esc(item.titre || 'la vidéo')}"`;
+    if (lightbox && image) return `href="${esc(image)}" data-lightbox="true" aria-label="Agrandir ${esc(item.titre || 'la photo')}"`;
     return 'href="#contact"';
   };
   const reveal = root => window.reveal?.(root);
@@ -48,13 +49,13 @@
     if (caption && typeof d.manifeste?.legende === 'string') caption.textContent = d.manifeste.legende;
     const projects = document.querySelector('.work-grid');
     if (projects && Array.isArray(d.projets)) {
-      projects.innerHTML = d.projets.map((item, i) => `<a class="card c${(i % 3) + 1} sr" ${linkAttrs(item)}><div class="frame ht">${mediaTag(item)}<div class="tint"></div></div><span class="idx">${String(i + 1).padStart(2, '0')}</span>${safeURL(item.video) || safeURL(item.lien) ? '<span class="play" aria-hidden="true"></span>' : ''}<div class="meta"><h3>${esc(item.titre)}</h3><span class="kind">${esc(item.type)}</span></div></a>`).join('') +
+      projects.innerHTML = d.projets.map((item, i) => `<a class="card c${(i % 3) + 1} sr" ${linkAttrs(item, true)}><div class="frame ht">${mediaTag(item)}<div class="tint"></div></div><span class="idx">${String(i + 1).padStart(2, '0')}</span>${safeURL(item.video) || safeURL(item.lien) ? '<span class="play" aria-hidden="true"></span>' : ''}<div class="meta"><h3>${esc(item.titre)}</h3><span class="kind">${esc(item.type)}</span></div></a>`).join('') +
         '<p class="work-more sr">Si un projet vous intéresse,<br><a href="#contact">contactez-moi →</a></p>';
       reveal(projects);
     }
     const gallery = document.querySelector('.gal-grid');
     if (gallery && Array.isArray(d.galerie)) {
-      gallery.innerHTML = d.galerie.map((item, i) => `<figure class="gph ${item.style === 'polar' ? 'polar' : 'raw'} g${(i % 5) + 1} sr${i % 2 ? ' sr-d1' : ''}">${item.style === 'polar' ? '<div class="tape" aria-hidden="true"></div>' : ''}<div class="ht"><img src="${esc(imageURL(item.image))}" alt="${esc(item.alt || item.legende)}" loading="lazy" decoding="async"><div class="tint"></div></div><figcaption class="cap">${esc(item.legende)}</figcaption></figure>`).join('') +
+      gallery.innerHTML = d.galerie.map((item, i) => `<figure class="gph ${item.style === 'polar' ? 'polar' : 'raw'} g${(i % 5) + 1} sr${i % 2 ? ' sr-d1' : ''}"${imageURL(item.image) ? ' data-lightbox="true" tabindex="0" role="button" aria-label="Agrandir la photo"' : ''}>${item.style === 'polar' ? '<div class="tape" aria-hidden="true"></div>' : ''}<div class="ht"><img src="${esc(imageURL(item.image))}" alt="${esc(item.alt || item.legende)}" loading="lazy" decoding="async"><div class="tint"></div></div><figcaption class="cap">${esc(item.legende)}</figcaption></figure>`).join('') +
         (d.galerie.length ? '<p class="gal-note sr">chaque tournage laisse des images en trop —<br>les voilà.</p>' : '');
       reveal(gallery);
     }
@@ -63,7 +64,7 @@
     const grid = document.querySelector('.sd-media .grid');
     const formats = ['m-w', 'm-n', 'm-v', 'm-h', 'm-f'];
     if (grid && Array.isArray(d.medias)) {
-      grid.innerHTML = d.medias.map((item, i) => `<a class="med ${formats.includes(item.format) ? item.format : 'm-w'} sr" ${linkAttrs(item)}><div class="ht">${mediaTag(item)}<div class="tint"></div></div><span class="idx">${String(i + 1).padStart(2, '0')}</span>${safeURL(item.video) || safeURL(item.lien) ? '<span class="play" aria-hidden="true"></span>' : ''}<div class="meta"><h3>${esc(item.titre)}</h3><span class="kind">${esc(item.type)}</span></div></a>`).join('') +
+      grid.innerHTML = d.medias.map((item, i) => `<a class="med ${formats.includes(item.format) ? item.format : 'm-w'} sr" ${linkAttrs(item, true)}><div class="ht">${mediaTag(item)}<div class="tint"></div></div><span class="idx">${String(i + 1).padStart(2, '0')}</span>${safeURL(item.video) || safeURL(item.lien) ? '<span class="play" aria-hidden="true"></span>' : ''}<div class="meta"><h3>${esc(item.titre)}</h3><span class="kind">${esc(item.type)}</span></div></a>`).join('') +
         '<p class="more sr">Envie d’en voir plus ?<br><a href="#contact">contactez-moi →</a></p>';
       reveal(grid);
     }
@@ -98,6 +99,26 @@
       video.dataset.fallback = 'true';
       const img = document.createElement('img'); img.src = video.poster; img.alt = video.getAttribute('aria-label') || ''; video.hidden = true; video.after(img);
     });
+  });
+  // lightbox : les photos (services, projets, galerie) s'ouvrent en grand au clic
+  const lightbox = document.createElement('dialog'); lightbox.className = 'portfolio-image-dialog';
+  lightbox.innerHTML = '<button type="button" class="video-close" aria-label="Fermer la photo">Fermer ×</button><figure><img alt=""><figcaption></figcaption></figure>';
+  document.body.append(lightbox);
+  const lightboxImg = lightbox.querySelector('img'); const lightboxCap = lightbox.querySelector('figcaption');
+  lightbox.querySelector('button').onclick = () => lightbox.close();
+  lightbox.addEventListener('click', event => { if (event.target === lightbox) lightbox.close(); });
+  lightbox.addEventListener('close', () => { lightboxImg.removeAttribute('src'); });
+  const openLightbox = (card, event) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const img = card.querySelector('.ht img'); if (!img) return;
+    event.preventDefault();
+    lightboxImg.src = card.getAttribute('href') || img.currentSrc || img.src; lightboxImg.alt = img.alt || '';
+    lightboxCap.textContent = card.querySelector('h3, .cap')?.textContent || '';
+    lightbox.showModal();
+  };
+  document.querySelectorAll('[data-lightbox]').forEach(card => {
+    card.addEventListener('click', event => openLightbox(card, event));
+    if (card.tagName !== 'A') card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') openLightbox(card, event); });
   });
   window.navTheme?.();
 })();

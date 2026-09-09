@@ -144,7 +144,6 @@ function openEditor(list, index, isNew = false) {
     field('image', 'Adresse de la photo', item.image, 'L’import remplit ce champ automatiquement. Une URL HTTPS ou un chemin /img/… fonctionne aussi.') +
     field('alt', 'Description de l’image', item.alt, 'Quelques mots pour les personnes qui ne peuvent pas voir la photo.') +
     (!single && !gallery ? field('video', 'Adresse de la vidéo', item.video, 'Fichier vidéo direct en HTTPS. Laisse vide pour afficher uniquement la photo.') + field('lien', 'Lien au clic (facultatif)', item.lien, 'YouTube, Vimeo, Instagram… Sans lien, le clic ouvre la vidéo importée.') : '') +
-    (list === 'medias' ? select('format', 'Format dans la grille', item.format, [['m-w','Large · 16/10'],['m-n','Portrait · 4/5'],['m-v','Vertical · 9/16'],['m-h','Demi-largeur · 16/9'],['m-f','Pleine largeur · 21/9']]) : '') +
     (gallery ? select('style', 'Présentation', item.style, [['raw','Photo brute'],['polar','Polaroid']]) : '');
   $('#replace-image').onclick = () => chooseFiles(list, 'image', true);
   if ($('#replace-video')) $('#replace-video').onclick = () => chooseFiles(list, 'video', true);
