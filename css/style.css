@@ -111,6 +111,8 @@ nav.on-dark .nav-cta:hover{background:var(--papier)}
    ============================================================ */
 .hero{position:relative;height:100vh;height:100svh;overflow:hidden;background:var(--papier)}
 .hero-canvas{position:absolute;inset:0;width:100%;height:100%}
+/* source vidéo de la trame : présente dans le DOM (exigé par certains mobiles), jamais visible */
+.hero-source{position:absolute;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
 .hero-fallback{
   display:flex;position:absolute;inset:0;padding:0 5vw;flex-direction:column;justify-content:center;
   font-family:var(--anton);font-size:clamp(70px,22vw,340px);line-height:.8;text-transform:uppercase;color:var(--rouge);
@@ -133,20 +135,16 @@ body.is-ready .hero-ui-bl{animation-delay:.5s}body.is-ready .hero-ui-br{animatio
 .hero-ui-br{bottom:5vh;right:28px;text-align:right;display:flex;align-items:center;gap:14px;color:var(--rouge)}
 .hero-ui-br .bar{width:60px;height:1px;background:var(--rouge);transform-origin:left;animation:slide 1.6s var(--ease) infinite}
 @keyframes slide{0%{transform:scaleX(0);transform-origin:left}45%{transform:scaleX(1);transform-origin:left}55%{transform:scaleX(1);transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}
-.spark-hero{z-index:4;width:clamp(90px,10vw,150px);aspect-ratio:1;right:6vw;top:16vh;opacity:0;transform:scale(.4) rotate(-40deg)}
-body.is-ready .spark-hero{animation:pop .9s var(--ease) .5s forwards}
-@keyframes pop{to{opacity:1;transform:none}}
 @media(max-width:720px){
   .hero-ui-tl{top:62px;left:18px}.hero-ui-tr{top:62px;right:18px}
   .hero-ui-bl{left:18px;bottom:11vh;max-width:75vw}.hero-ui-br{right:18px;bottom:4vh}
   .hero-ui{font-size:10px;letter-spacing:.16em}
-  .spark-hero{top:auto;bottom:24vh;right:8vw;width:70px}
   /* pages services : les mots-clés passent sous la ligne « Service /01 » */
   body:not([data-page="accueil"]) .hero-ui-tr{top:92px;left:18px;right:18px;text-align:left}
 }
 @media(prefers-reduced-motion:reduce){
   .grain,.hero-ui-br .bar{animation:none}
-  .hero-ui,.spark-hero{opacity:1;transform:none;animation:none!important}
+  .hero-ui{opacity:1;transform:none;animation:none!important}
   .sr{opacity:1;transform:none;transition:none}
 }
 

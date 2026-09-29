@@ -106,7 +106,19 @@ const localLight = url => {
   return m && LIGHT.has(m[1]) ? '/img/web/' + m[1] : url;
 };
 
-function mountHero({ video: reelSrc, image: poster }) {
+// ctx.filter (grayscale, contrast) n'existe pas sur tous les navigateurs, notamment Safari : il y est ignoré
+// sans erreur et la loupe resterait en couleur. On le teste une fois ; à défaut, on désature par composition.
+const CANVAS_FILTER = (() => {
+  try {
+    const c = document.createElement('canvas'); c.width = c.height = 1;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.filter = 'grayscale(1)'; x.fillStyle = '#f00'; x.fillRect(0, 0, 1, 1);
+    const d = x.getImageData(0, 0, 1, 1).data;
+    return Math.abs(d[0] - d[1]) < 8;
+  } catch { return false; }
+})();
+
+function mountHero({ video: reelSrc, image: poster, still }) {
   const hero = document.querySelector('.hero');
   const cv = document.querySelector('.hero-canvas');
   const ctx = cv?.getContext('2d');
@@ -117,27 +129,56 @@ function mountHero({ video: reelSrc, image: poster }) {
   let src = null, srcW = 0, srcH = 0, video = null;
   let visible = !document.hidden, inView = true;
   let active = null, dotsDirty = true, lastFrame = -1, frameReady = false, hasVFC = false;
-  // la vidéo ne décode que si le hero est à l'écran et l'onglet visible
-  const syncVideo = () => { if (!video || src !== video) return; if (visible && inView) video.play().catch(() => {}); else video.pause(); };
-  if (reduced || !reelSrc) {
-    if (poster) {
-      const img = new Image(); img.crossOrigin = 'anonymous'; img.src = localLight(poster);
-      img.onload = () => { src = img; srcW = img.naturalWidth; srcH = img.naturalHeight; dotsDirty = true; kick(); };
-    }
-  } else {
+  // image fixe dans les lettres (animations réduites, pas de vidéo, lecture automatique refusée)
+  const useImage = url => {
+    if (!url) return;
+    const img = new Image(); img.crossOrigin = 'anonymous'; img.src = localLight(url);
+    img.onload = () => { if (src === video && video && !video.paused) return; src = img; srcW = img.naturalWidth; srcH = img.naturalHeight; dotsDirty = true; kick(); };
+  };
+  let blocked = false;
+  // la vidéo ne décode que si le hero est à l'écran et l'onglet visible. play() est appelé tout de suite :
+  // Safari iOS ne charge aucune image tant qu'on ne lui a pas demandé de lire (preload y est ignoré).
+  const syncVideo = () => {
+    if (!video) return;
+    if (!(visible && inView)) { video.pause(); return; }
+    video.play().then(() => { blocked = false; }).catch(err => {
+      if (err?.name !== 'NotAllowedError' || blocked) return;
+      // lecture automatique refusée (mode économie d'énergie iOS…) : la couverture s'affiche dans la trame,
+      // et la vidéo démarre au premier toucher sur la page
+      blocked = true; useImage(poster);
+      const retry = () => { removeEventListener('touchstart', retry); removeEventListener('click', retry); syncVideo(); };
+      addEventListener('touchstart', retry, { passive: true, once: true }); addEventListener('click', retry, { once: true });
+    });
+  };
+  if (reduced || !reelSrc) useImage(poster);
+  else {
+    // en attendant la vidéo, une image du film lui-même (pas de saut visuel au démarrage)
+    useImage(still || poster);
     video = document.createElement('video');
-    video.muted = true; video.loop = true; video.playsInline = true; video.crossOrigin = 'anonymous'; video.preload = 'auto';
-    if (poster) video.poster = poster;
-    // 1600 px suffisent : la trame échantillonne ~100 colonnes, la loupe couvre un cinquième de l'écran
-    video.src = cloudVariant(reelSrc, 1600);
-    video.addEventListener('loadeddata', () => { src = video; srcW = video.videoWidth; srcH = video.videoHeight; dotsDirty = true; syncVideo(); kick(); });
+    // attributs (pas seulement propriétés) : iOS les exige pour la lecture automatique en ligne
+    video.muted = true; video.setAttribute('muted', ''); video.loop = true;
+    video.playsInline = true; video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
+    video.crossOrigin = 'anonymous'; video.preload = 'auto'; video.disablePictureInPicture = true;
+    video.setAttribute('aria-hidden', 'true'); video.tabIndex = -1;
+    // dans le DOM mais invisible : certains navigateurs mobiles ne décodent pas une vidéo détachée
+    video.className = 'hero-source';
+    // la trame échantillonne ~100 colonnes : 1600 px suffisent sur grand écran, 960 px sur mobile
+    video.src = cloudVariant(reelSrc, innerWidth <= 900 ? 960 : 1600);
+    hero.append(video);
+    const ready = () => {
+      if (!video.videoWidth || video.readyState < 2) return;
+      src = video; srcW = video.videoWidth; srcH = video.videoHeight; dotsDirty = true; kick();
+    };
+    video.addEventListener('loadeddata', ready);
+    video.addEventListener('playing', ready);
     // la trame ne se recalcule qu'à chaque image réellement décodée (25 à 30 par seconde), pas à chaque rafraîchissement
     if (video.requestVideoFrameCallback) {
       const onFrame = () => { frameReady = true; video.requestVideoFrameCallback(onFrame); };
       video.requestVideoFrameCallback(onFrame);
       hasVFC = true;
     }
-    video.addEventListener('error', () => { src = null; kick(); });
+    video.addEventListener('error', () => { if (src === video) src = null; useImage(poster); kick(); });
+    syncVideo();
   }
 
   const sm = document.createElement('canvas');
@@ -202,6 +243,32 @@ function mountHero({ video: reelSrc, image: poster }) {
     if (x1 <= x0 || y1 <= y0) return;
     target.drawImage(src, (x0 - ox) / s, (y0 - oy) / s, (x1 - x0) / s, (y1 - y0) / s, x0, y0, x1 - x0, y1 - y0);
   }
+  // noir et blanc contrasté d'une zone de la source, dessiné dans ctx (déjà découpé par l'appelant).
+  // Avec ctx.filter : filtre natif. Sans : copie dans un calque, mode « saturation » avec une couleur
+  // neutre (= niveaux de gris), puis la copie superposée à elle-même en « overlay » pour le contraste.
+  const mono = document.createElement('canvas'); const mnctx = mono.getContext('2d');
+  function grayscale(zone, contrast) {
+    if (CANVAS_FILTER) {
+      ctx.save(); ctx.filter = `grayscale(1) contrast(${contrast})`; cover(ctx, W, H, zone); ctx.restore();
+      return;
+    }
+    const x0 = Math.max(0, Math.floor(zone ? zone.x0 : 0)), y0 = Math.max(0, Math.floor(zone ? zone.y0 : 0));
+    const x1 = Math.min(W, Math.ceil(zone ? zone.x1 : W)), y1 = Math.min(H, Math.ceil(zone ? zone.y1 : H));
+    const w = x1 - x0, h = y1 - y0;
+    if (w <= 0 || h <= 0) return;
+    const pw = Math.ceil(w * dpr), ph = Math.ceil(h * dpr);
+    if (mono.width < pw || mono.height < ph) { mono.width = Math.max(mono.width, pw); mono.height = Math.max(mono.height, ph); }
+    mnctx.globalCompositeOperation = 'source-over'; mnctx.globalAlpha = 1;
+    mnctx.setTransform(1, 0, 0, 1, 0, 0); mnctx.clearRect(0, 0, pw, ph);
+    mnctx.setTransform(dpr, 0, 0, dpr, -x0 * dpr, -y0 * dpr);
+    cover(mnctx, W, H, { x0, y0, x1, y1 });
+    mnctx.globalCompositeOperation = 'saturation'; mnctx.fillStyle = '#808080'; mnctx.fillRect(x0, y0, w, h);
+    mnctx.setTransform(1, 0, 0, 1, 0, 0);
+    mnctx.globalCompositeOperation = 'overlay'; mnctx.globalAlpha = Math.min(1, (contrast - 1) * 1.6);
+    mnctx.drawImage(mono, 0, 0, pw, ph, 0, 0, pw, ph);
+    mnctx.globalCompositeOperation = 'source-over'; mnctx.globalAlpha = 1;
+    ctx.drawImage(mono, 0, 0, pw, ph, x0, y0, w, h);
+  }
   function text(fill) {
     ctx.fillStyle = fill; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     lines.forEach(l => { ctx.font = `${l.f}px Anton`; ctx.fillText(l.t, W / 2, l.y); });
@@ -253,7 +320,7 @@ function mountHero({ video: reelSrc, image: poster }) {
     if (!tainted) ctx.drawImage(dots, 0, 0, W, H);
     else {
       // canvas « tainted » (pas de CORS) : image N&B teintée rouge, sans trame
-      ctx.save(); ctx.filter = 'grayscale(1) contrast(1.3)'; cover(ctx, W, H); ctx.restore();
+      grayscale(null, 1.3);
       ctx.globalCompositeOperation = 'source-atop'; ctx.fillStyle = 'rgba(227,23,10,.82)'; ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'source-over';
     }
@@ -262,8 +329,7 @@ function mountHero({ video: reelSrc, image: poster }) {
       mouse.x += (mouse.tx - mouse.x) * 0.18; mouse.y += (mouse.ty - mouse.y) * 0.18; mouse.dirty = false;
       const R = Math.min(W, H) * 0.22;
       ctx.save(); ctx.beginPath(); ctx.arc(mouse.x, mouse.y, R, 0, Math.PI * 2); ctx.clip();
-      ctx.filter = 'grayscale(1) contrast(1.35)';
-      cover(ctx, W, H, { x0: mouse.x - R - 1, y0: mouse.y - R - 1, x1: mouse.x + R + 1, y1: mouse.y + R + 1 });
+      grayscale({ x0: mouse.x - R - 1, y0: mouse.y - R - 1, x1: mouse.x + R + 1, y1: mouse.y + R + 1 }, 1.35);
       ctx.restore();
     }
     // tout ça découpé par les lettres
@@ -660,7 +726,8 @@ function mountContact() {
     // la vidéo du premier film joue dans les lettres ; la couverture choisie dans l'admin sert d'image
     // (animations réduites, aucun film vidéo). À défaut, une frame du film à 4 s.
     const cover = imageURL(d.hero?.image);
-    mountHero({ video: safeURL(first?.video), image: cover ? cloudImage(localLight(cover), 1600) : imageURL(first?.image).replace('/so_0,', '/so_4,') });
+    const frame = cloudImage(imageURL(first?.image), 960).replace('/so_0,', '/so_4,');
+    mountHero({ video: safeURL(first?.video), image: cover ? cloudImage(localLight(cover), 1600) : frame, still: first?.video ? frame : '' });
     // le portrait de l'admin s'imprime sur le badge
     const portrait = imageURL(d.manifeste?.image), photo = document.querySelector('.bf-photo');
     if (portrait && photo) { photo.src = cloudImage(localLight(portrait), 640); photo.alt = d.manifeste.alt || photo.alt; }
@@ -680,7 +747,7 @@ function mountContact() {
     const heroImage = cloudImage(imageURL(d.hero?.image) || hero.dataset.image || '', 1600);
     // la photo du service dans les lettres ; le premier film de la sélection s'il y en a un
     const firstVideo = (d.medias || []).find(m => safeURL(m.video));
-    mountHero({ video: safeURL(firstVideo?.video), image: heroImage });
+    mountHero({ video: safeURL(firstVideo?.video), image: heroImage, still: firstVideo ? cloudImage(imageURL(firstVideo.image), 960).replace('/so_0,', '/so_4,') : '' });
     mountSelection(d);
   }
   mountPlayers();
