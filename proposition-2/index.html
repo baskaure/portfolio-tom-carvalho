@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOM CARVALHO — VIDÉASTE</title>
+<meta name="description" content="Tom Carvalho, vidéaste indépendant à Paris. Films, clips, aftermovies — des images qui marquent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<noscript><style>.leader{display:none}.sr{opacity:1;transform:none}.hero-fallback{display:block}</style></noscript>
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ================= AMORCE — compte à rebours 3·2·1 ================= -->
+<div class="leader" aria-hidden="true">
+  <div class="leader-wipe"></div>
+  <div class="leader-cross"></div>
+  <div class="leader-num">3</div>
+  <div class="leader-tag">Tom Carvalho — Showreel — Picture start</div>
+</div>
+
+<!-- ================= NAV ================= -->
+<nav>
+  <a href="#top" class="logo">TOM<em>—</em>CARVALHO</a>
+  <ul>
+    <li><a href="#films">Films</a></li>
+    <li><a href="#generique">Générique</a></li>
+  </ul>
+  <a class="nav-cta" href="#fin">Écris-moi</a>
+</nav>
+
+<!-- ================= HERO — projection =================
+     Le showreel joue à l'intérieur des lettres, en trame de points rouges.
+     La souris est une loupe : sous le curseur, l'image nette apparaît.
+     Sans canvas / sans vidéo : titre rouge plein (hero-fallback). -->
+<header class="hero" id="top">
+  <canvas class="hero-canvas" aria-hidden="true"></canvas>
+  <h1 class="hero-fallback">TOM<br>CARVALHO</h1>
+  <p class="sr-only">Tom Carvalho — vidéaste indépendant, Paris.</p>
+
+  <div class="hero-ui hero-ui-tl"><span class="dot"></span>Showreel <span class="hero-tc">00:00:00:00</span></div>
+  <div class="hero-ui hero-ui-tr">Vidéaste indépendant<br>Paris — France</div>
+  <div class="hero-ui hero-ui-bl">Captation · Montage · Étalonnage<br>Des vidéos qui marquent.</div>
+  <a class="hero-ui hero-ui-br" href="#films">Voir les films <span class="bar"></span></a>
+
+  <div class="spark spark-hero" aria-hidden="true">
+    <svg viewBox="0 0 100 100"><polygon fill="#e3170a" points="50,0 57,38 88,12 63,45 100,50 63,55 88,88 57,62 50,100 43,62 12,88 37,55 0,50 37,45 12,12 43,38"/></svg>
+  </div>
+</header>
+
+<!-- ================= FILMS — pellicule =================
+     Bande de film noire sur papier. Sur grand écran la section est épinglée :
+     le scroll vertical fait défiler la bande horizontalement. Le photogramme au
+     centre joue ; clic = lecteur plein cadre. Sur mobile la bande est verticale. -->
+<section class="reel" id="films">
+  <div class="reel-pin">
+    <div class="reel-head">
+      <div class="sec-label sr">01 — Films</div>
+      <p class="reel-count sr sr-d1"><span class="cur">01</span> / <span class="tot">03</span> — <span class="hint">scroll pour dérouler</span></p>
+    </div>
+    <div class="strip"></div>
+  </div>
+</section>
+
+<!-- ================= GÉNÉRIQUE — réalisé par ================= -->
+<section class="credits" id="generique">
+  <div class="sec-label sr">02 — Générique</div>
+  <h2 class="big sr sr-d1">Réalisé par<br><em>Tom Carvalho</em></h2>
+
+  <dl class="roll">
+    <div class="sr" style="--i:0"><dt>Réalisation, image, montage</dt><dd>Tom Carvalho — 22 ans, Paris</dd></div>
+    <div class="sr" style="--i:1"><dt>Depuis</dt><dd>2022 — 50 projets livrés, de l'automobile aux réseaux sociaux</dd></div>
+    <div class="sr" style="--i:2"><dt>Contenu</dt><dd><a href="../services/contenu.html">Formats courts qui arrêtent le scroll</a></dd></div>
+    <div class="sr" style="--i:3"><dt>Institutionnel</dt><dd><a href="../services/institutionnel.html">Films de marque, communication d'entreprise</a></dd></div>
+    <div class="sr" style="--i:4"><dt>Aftermovies</dt><dd><a href="../services/aftermovies.html">Festivals, concerts, l'énergie en deux minutes</a></dd></div>
+    <div class="sr" style="--i:5"><dt>Shooting</dt><dd><a href="../services/shooting.html">Portraits, produits, campagnes</a></dd></div>
+    <div class="sr" style="--i:6"><dt>Étalonnage</dt><dd><a href="../services/etalonnage.html">Vos rushes, mon rythme, la couleur au poil</a></dd></div>
+    <div class="sr" style="--i:7"><dt>Tarifs</dt><dd>Sur devis — réponse sous 24h</dd></div>
+  </dl>
+
+  <figure class="credits-photo sr sr-d2">
+    <span class="tape" aria-hidden="true"></span>
+    <img src="../img/portrait-tom.jpg" alt="Tom Carvalho, portrait tramé devant une Porsche GT3">
+    <figcaption>Tom — 22 ans — Vidéaste</figcaption>
+  </figure>
+</section>
+
+<!-- ================= FIN — carton rouge ================= -->
+<section class="fin" id="fin">
+  <h2 class="fin-title sr">FIN<span>.</span></h2>
+  <p class="fin-sub sr sr-d1">Une idée, un projet, une envie floue à 3h du matin — envoie.</p>
+  <a class="fin-mail sr sr-d2" href="mailto:tom.fj.carvalho@gmail.com">tom.fj.carvalho@gmail.com</a>
+  <p class="fin-coords sr sr-d3"><a href="https://www.instagram.com/crv.tom" target="_blank" rel="noopener">@crv.tom ↗</a><span>Paris — dispo partout en France</span><span>Réponse sous 24h</span></p>
+</section>
+
+<footer>
+  <span>© 2026 Tom Carvalho</span>
+  <a class="madaria-link" href="https://madaria.fr" target="_blank" rel="noopener noreferrer" aria-label="Site de Madaria, créateur du site (nouvel onglet)">
+    <svg class="madaria" viewBox="0 0 560 104" role="img" aria-label="Made by Madaria">
+      <defs>
+        <path id="st" d="M0,-5.5 L1.7,-1.8 5.5,-1.8 2.5,0.8 3.4,4.6 0,2.2 -3.4,4.6 -2.5,0.8 -5.5,-1.8 -1.7,-1.8 Z"/>
+        <pattern id="starband" width="19" height="19" patternUnits="userSpaceOnUse">
+          <rect width="19" height="19" fill="#4fc4cc"/>
+          <use href="#st" transform="translate(5,5) rotate(14) scale(.85)" fill="#6e0f22"/>
+          <use href="#st" transform="translate(14,14) rotate(-22) scale(.7)" fill="#6e0f22"/>
+        </pattern>
+        <linearGradient id="redfill" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#b32032"/><stop offset=".55" stop-color="#8f1424"/><stop offset="1" stop-color="#7a1020"/>
+        </linearGradient>
+      </defs>
+      <g font-family="Anton, Impact, sans-serif" font-size="56" letter-spacing="3" text-anchor="middle">
+        <text x="280" y="70" stroke="#14090c" stroke-width="30" stroke-linejoin="round">MADE BY MADARIA</text>
+        <text x="280" y="70" stroke="url(#starband)" stroke-width="24" stroke-linejoin="round">MADE BY MADARIA</text>
+        <text x="280" y="70" stroke="#d9a520" stroke-width="7" stroke-linejoin="round">MADE BY MADARIA</text>
+        <text x="280" y="70" fill="url(#redfill)">MADE BY MADARIA</text>
+      </g>
+    </svg>
+  </a>
+  <a class="up" href="#top">Remonter ↑</a>
+</footer>
+
+<script src="app.js" type="module"></script>
+
+</body>
+</html>
