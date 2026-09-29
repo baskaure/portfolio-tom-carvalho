@@ -92,6 +92,8 @@ function makeStrap(length, width, dpr, { strap, print, accent, plain }) {
   return c;
 }
 
+const SHADES = Array.from({ length: 101 }, (_, i) => `rgba(0,0,0,${(i / 100).toFixed(2)})`);
+
 const rr = (ctx, x, y, w, h, r) => {
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);
@@ -155,7 +157,8 @@ export function mountBadge(root, anchor = null) {
     const rb = root.getBoundingClientRect();
     const ab = anchor ? anchor.getBoundingClientRect() : rb;
     const ax = ab.left - rb.left, ay = ab.top - rb.top, AW = Math.max(1, ab.width), AH = Math.max(1, ab.height);
-    const cx = ax + AW / 2;
+    // sur mobile, l'accroche passe à droite : l'étiquette de section reste lisible en haut à gauche
+    const cx = ax + AW * (W <= 900 ? 0.68 : 0.5);
     const spread = Math.min(AW * 0.16, cw * 0.55);
     const top = ay - sw * 2;
     // la boucle est placée pour que toute la carte tienne dans la zone d'accroche
@@ -172,6 +175,7 @@ export function mountBadge(root, anchor = null) {
     left = l.ids; right = r.ids; low = lo.ids; strandRest = l.rest;
     strapTex = makeStrap(strandRest * N + 4, sw, dpr, LOOK);
     plainTex = makeStrap(lowLen + 4, sw * 0.8, dpr, { ...LOOK, plain: true });
+    makeSprites();
     // la scène démarre au repos ; l'élan est donné quand la section entre à l'écran
     spin.a = spinTarget; spin.v = 0;
     for (let i = 0; i < 600; i++) { integrate(pts, STEP, GRAVITY, 0.98); solve(pts, links, ITER); }
@@ -202,20 +206,48 @@ export function mountBadge(root, anchor = null) {
       if (src > 0) ctx.drawImage(tex, 0, v0, Wt, src, 0, v0, Wt, src);
       // un brin tourné à l'opposé de la lumière paraît plus sombre, ça vend la 3D
       const shade = 0.26 * (1 - Math.max(0, nx * light));
-      ctx.fillStyle = `rgba(0,0,0,${shade.toFixed(3)})`;
+      ctx.fillStyle = SHADES[Math.round(shade * 100)];
       ctx.fillRect(0, v0, Wt, dv + 1);
     }
   }
-  const metal = (x0, y0, x1, y1) => {
-    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  const metal = (c, x0, y0, x1, y1) => {
+    const g = c.createLinearGradient(x0, y0, x1, y1);
     g.addColorStop(0, '#ecebe7'); g.addColorStop(0.45, '#a3a09a');
     g.addColorStop(0.55, '#6f6c67'); g.addColorStop(1, '#dedcd6');
     return g;
   };
+  // la boucle et l'anneau sont rendus une fois en sprites (l'ombre floutée coûte cher image par image)
+  let buckle = null, ring = null;
+  function makeSprites() {
+    const u = sw / 20, pad = 10 * u;
+    const bw = 30 * u + 2 * pad, bh = 31 * u + 2 * pad;
+    buckle = { c: document.createElement('canvas'), ox: 15 * u + pad, oy: 14 * u + pad, w: bw, h: bh };
+    buckle.c.width = Math.ceil(bw * dpr); buckle.c.height = Math.ceil(bh * dpr);
+    const b = buckle.c.getContext('2d');
+    b.setTransform(dpr, 0, 0, dpr, buckle.ox * dpr, buckle.oy * dpr);
+    b.shadowColor = 'rgba(0,0,0,0.5)'; b.shadowBlur = 6 * dpr; b.shadowOffsetY = 2 * dpr;
+    b.fillStyle = metal(b, -16 * u, 0, 16 * u, 0);
+    rr(b, -15 * u, -14 * u, 30 * u, 17 * u, 3 * u); b.fill();
+    rr(b, -11 * u, 1 * u, 22 * u, 15 * u, [2 * u, 2 * u, 6 * u, 6 * u]); b.fill();
+    b.shadowColor = 'transparent';
+    b.fillStyle = 'rgba(20,20,20,0.6)';
+    b.fillRect(-10 * u, -9 * u, 20 * u, 2.2 * u);
+    b.fillRect(-5 * u, 6 * u, 10 * u, 3 * u);
+    b.strokeStyle = 'rgba(255,255,255,0.6)'; b.lineWidth = 0.8 * u;
+    b.beginPath(); b.moveTo(-13 * u, -12.5 * u); b.lineTo(13 * u, -12.5 * u); b.stroke();
+
+    const lw = Math.max(2.5, ringR * 0.38), rs = ringR + lw;
+    ring = { c: document.createElement('canvas'), o: rs, w: rs * 2 };
+    ring.c.width = ring.c.height = Math.ceil(rs * 2 * dpr);
+    const r = ring.c.getContext('2d');
+    r.setTransform(dpr, 0, 0, dpr, rs * dpr, rs * dpr);
+    r.lineWidth = lw; r.strokeStyle = metal(r, -ringR, -ringR, ringR, ringR);
+    r.beginPath(); r.arc(0, 0, ringR, 0, Math.PI * 2); r.stroke();
+  }
   function draw() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (!strapTex || !plainTex) return;
+    if (!strapTex || !plainTex || !buckle) return;
     ctx.imageSmoothingEnabled = true;
     ribbon(left, strapTex, strandRest, -1);
     ribbon(right, strapTex, strandRest, 1);
@@ -224,25 +256,13 @@ export function mountBadge(root, anchor = null) {
     // boucle à clip, tournée dans l'axe de la sangle courte
     const B = pts[iB], T = pts[iT];
     const ang = Math.atan2(T.x - B.x, T.y - B.y);
-    const u = sw / 20;
     ctx.setTransform(dpr, 0, 0, dpr, B.x * dpr, B.y * dpr);
     ctx.rotate(-ang);
-    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 6 * dpr; ctx.shadowOffsetY = 2 * dpr;
-    ctx.fillStyle = metal(-16 * u, 0, 16 * u, 0);
-    rr(ctx, -15 * u, -14 * u, 30 * u, 17 * u, 3 * u); ctx.fill();
-    rr(ctx, -11 * u, 1 * u, 22 * u, 15 * u, [2 * u, 2 * u, 6 * u, 6 * u]); ctx.fill();
-    ctx.shadowColor = 'transparent';
-    ctx.fillStyle = 'rgba(20,20,20,0.6)';
-    ctx.fillRect(-10 * u, -9 * u, 20 * u, 2.2 * u);
-    ctx.fillRect(-5 * u, 6 * u, 10 * u, 3 * u);
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 0.8 * u;
-    ctx.beginPath(); ctx.moveTo(-13 * u, -12.5 * u); ctx.lineTo(13 * u, -12.5 * u); ctx.stroke();
+    ctx.drawImage(buckle.c, -buckle.ox, -buckle.oy, buckle.w, buckle.h);
 
     // anneau brisé
     ctx.setTransform(dpr, 0, 0, dpr, T.x * dpr, (T.y + ringR * 0.8) * dpr);
-    ctx.lineWidth = Math.max(2.5, ringR * 0.38);
-    ctx.strokeStyle = metal(-ringR, -ringR, ringR, ringR);
-    ctx.beginPath(); ctx.arc(0, 0, ringR, 0, Math.PI * 2); ctx.stroke();
+    ctx.drawImage(ring.c, -ring.o, -ring.o, ring.w, ring.w);
   }
   function place() {
     const T = pts[iT], C = pts[iC];

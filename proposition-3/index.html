@@ -25,7 +25,7 @@
 
 <!-- ================= NAV ================= -->
 <nav>
-  <a href="#top" class="logo" aria-label="Tom Carvalho — accueil"><svg class="logo-star" viewBox="0 0 100 100" aria-hidden="true"><polygon fill="currentColor" points="50,0 57,38 88,12 63,45 100,50 63,55 88,88 57,62 50,100 43,62 12,88 37,55 0,50 37,45 12,12 43,38"/></svg><span class="logo-word" aria-hidden="true"><b class="lw-top">Tom</b><b>Carvalho</b></span></a>
+  <a href="#top" class="logo" aria-label="Tom Carvalho — accueil"><picture><source srcset="img/logo-96.webp 1x, img/logo-192.webp 2x" type="image/webp"><img class="logo-img" src="img/logo-96.png" srcset="img/logo-192.png 2x" width="48" height="48" alt=""></picture></a>
   <ul>
     <li><a href="#generique">Générique</a></li>
     <li><a href="#films">Films</a></li>
@@ -56,6 +56,7 @@
      on le balance, un clic le retourne. Recto et verso se modifient ici même.
      À droite : un générique qui défile en boucle (survol = pause). -->
 <section class="credits" id="generique">
+  <div class="sec-label credits-label sr">01 — Générique</div>
   <!-- repère d'accroche : réserve la colonne gauche ; la scène, elle, couvre toute la section -->
   <div class="badge-anchor" aria-hidden="true"></div>
   <div class="badge-stage" data-badge>
@@ -67,10 +68,10 @@
         <!-- recto : laissez-passer plateau -->
         <div class="badge-face badge-front">
           <div class="bf-head"><b>Accès plateau</b><span>N°001</span></div>
-          <img class="bf-photo" src="../img/portrait-tom.jpg" alt="Tom Carvalho" draggable="false">
+          <img class="bf-photo" src="img/portrait-tom.jpg" alt="Tom Carvalho" draggable="false">
           <div class="bf-id"><strong>Tom Carvalho</strong><small>Réalisation · Image · Montage</small></div>
           <div class="bf-foot"><span class="bf-code" aria-hidden="true"></span><b>CREW</b></div>
-          <span class="badge-slot" aria-hidden="true"></span><span class="badge-shade" aria-hidden="true"></span>
+          <span class="badge-slot" aria-hidden="true"></span><span class="badge-shade" aria-hidden="true"></span><span class="badge-shine" aria-hidden="true"></span>
         </div>
 
         <!-- verso : all access -->
@@ -86,24 +87,24 @@
             <span>tom.fj.carvalho@gmail.com</span>
             <span>@crv.tom — Paris</span>
           </div>
-          <span class="badge-slot" aria-hidden="true"></span><span class="badge-shade" aria-hidden="true"></span>
+          <span class="badge-slot" aria-hidden="true"></span><span class="badge-shade" aria-hidden="true"></span><span class="badge-shine" aria-hidden="true"></span>
         </div>
 
       </div>
     </div>
   </div>
 
-  <!-- bloc de crédits façon affiche de cinéma : lignes justifiées, petits rôles en mono rouge -->
+  <!-- présentation de Tom : deux paragraphes et trois chiffres -->
   <div class="credits-main">
-    <div class="sec-label sr">01 — Générique</div>
-    <div class="billing">
-      <p class="bl-pre sr">Une production indépendante · Paris · depuis 2022</p>
-      <h2 class="bl-name sr" style="--i:1">Tom Carvalho</h2>
-      <p class="bl-row sr" style="--i:2"><span><small>écrit par</small> Tom Carvalho</span> <span><small>filmé par</small> Tom Carvalho</span> <span><small>monté par</small> Tom Carvalho</span> <span><small>étalonné par</small> Tom Carvalho</span></p>
-      <p class="bl-row sr" style="--i:3"><span><small>matière première</small> la lumière</span> <span><small>outil</small> la caméra</span> <span><small>objectif</small> <em>raconter</em></span></p>
-      <p class="bl-row bl-row-sm sr" style="--i:4"><small>sur le terrain</small> automobile · réseaux sociaux · événementiel · entreprise</p>
-      <p class="bl-story sr" style="--i:5">Ce qui a commencé par filmer ses proches est devenu une passion, puis un métier.</p>
-      <ul class="bl-foot sr" style="--i:6"><li><b>22</b> ans</li><li><b>50+</b> projets livrés</li><li><b>24h</b> pour répondre</li></ul>
+    <div class="about">
+      <!-- les mots s'allument un à un au scroll (app.js) ; <em> = mots clés en rouge -->
+      <p class="ab-lead" data-scrub>Ma matière première, c'est <em>la lumière</em>. Mon outil, c'est <em>la caméra</em>. Mon objectif, c'est <em>de raconter</em>. Depuis 4 ans, je façonne des histoires à travers l'image. Ce qui a commencé par filmer mes proches est devenu une passion, puis un métier.</p>
+      <p class="ab-sub sr" style="--i:1">Des projets variés, de l'automobile aux réseaux sociaux, en passant par l'événementiel et la communication d'entreprise. J'écris, je filme, je monte et je publie.</p>
+      <ul class="ab-num sr" style="--i:2">
+        <li><strong>4<i>+</i></strong><span>années de terrain</span></li>
+        <li><strong>50<i>+</i></strong><span>projets livrés</span></li>
+        <li><strong>01</strong><span>caméra toujours prête</span></li>
+      </ul>
     </div>
   </div>
 </section>
@@ -138,12 +139,49 @@
   </ul>
 </section>
 
-<!-- ================= FIN — carton rouge ================= -->
-<section class="fin" id="fin">
-  <h2 class="fin-title sr">FIN<span>.</span></h2>
-  <p class="fin-sub sr sr-d1">Une idée, un projet, une envie floue à 3h du matin — envoie.</p>
-  <a class="fin-mail sr sr-d2" href="mailto:tom.fj.carvalho@gmail.com">tom.fj.carvalho@gmail.com</a>
-  <p class="fin-coords sr sr-d3"><a href="https://www.instagram.com/crv.tom" target="_blank" rel="noopener">@crv.tom ↗</a><span>Paris — dispo partout en France</span><span>Réponse sous 24h</span></p>
+<!-- ================= CONTACT — le CTA du site d'origine, modernisé =================
+     Formulaire Netlify (même nom « contact » que le site actuel), envoi sans rechargement (app.js). -->
+<section class="contact" id="fin">
+  <div class="sec-label sr">05 — Contact</div>
+
+  <div class="spark spark-contact" aria-hidden="true">
+    <svg viewBox="0 0 100 100"><polygon fill="none" stroke="#e3170a" stroke-width="2.5" points="50,0 57,38 88,12 63,45 100,50 63,55 88,88 57,62 50,100 43,62 12,88 37,55 0,50 37,45 12,12 43,38"/></svg>
+  </div>
+
+  <h2 class="contact-title sr sr-d1">Une idée&nbsp;?<a href="mailto:tom.fj.carvalho@gmail.com">Écris-moi.</a></h2>
+
+  <div class="contact-grid">
+    <div class="contact-side">
+      <p class="contact-sub sr sr-d2">Une envie, un projet, une idée floue à 3h du matin — envoie, on en fait quelque chose. Basé à Paris, disponible partout en France.</p>
+
+      <div class="contact-mail-row sr sr-d3">
+        <a class="contact-mail" href="mailto:tom.fj.carvalho@gmail.com">tom.fj.carvalho@gmail.com</a>
+        <button type="button" class="contact-copy" data-copy="tom.fj.carvalho@gmail.com" aria-label="Copier l'adresse e-mail">Copier</button>
+      </div>
+
+      <ul class="contact-coords sr sr-d3">
+        <li><a href="https://www.instagram.com/crv.tom" target="_blank" rel="noopener">@crv.tom ↗</a></li>
+        <li>Réponse sous 24h — souvent moins</li>
+        <li>Paris — dispo partout en France</li>
+      </ul>
+    </div>
+
+    <form class="contact-form sr sr-d2" name="contact" method="POST" action="/" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="contact">
+      <input type="hidden" name="page" value="Accueil">
+      <p class="cf-trap" aria-hidden="true"><label>Ne pas remplir : <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+      <div class="cf-row">
+        <label class="cf-field"><input type="text" name="nom" required autocomplete="name" maxlength="120" placeholder=" "><span>Nom</span></label>
+        <label class="cf-field"><input type="email" name="email" required autocomplete="email" maxlength="200" placeholder=" "><span>Email</span></label>
+      </div>
+      <label class="cf-field"><input type="text" name="projet" maxlength="200" placeholder=" "><span>Projet — film de marque, aftermovie, shooting…</span></label>
+      <label class="cf-field"><textarea name="message" required rows="4" maxlength="4000" placeholder=" "></textarea><span>Raconte-moi l'idée, même floue</span></label>
+      <div class="cf-actions">
+        <button type="submit"><span>Envoyer</span> →</button>
+        <p class="cf-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+  </div>
 </section>
 
 <footer>

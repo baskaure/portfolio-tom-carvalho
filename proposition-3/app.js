@@ -60,12 +60,10 @@ reveal();
 
 // ---------- nav : blanche sur les blocs noirs ----------
 const nav = document.querySelector('nav');
-const darkBlocks = [...document.querySelectorAll('.credits, .services, footer')];
+const darkBlocks = [...document.querySelectorAll('.credits, .services, .contact, footer')];
 function navTheme() {
   const y = scrollY + 40;
   nav.classList.toggle('on-dark', darkBlocks.some(s => y >= s.offsetTop && y < s.offsetTop + s.offsetHeight));
-  // accueil : le nom du logo n'apparaît qu'une fois le hero (et son grand nom) quitté
-  if (isHome) nav.classList.toggle('at-top', scrollY < innerHeight * 0.55);
 }
 navTheme();
 addEventListener('scroll', navTheme, { passive: true });
@@ -74,6 +72,22 @@ addEventListener('resize', navTheme);
 // ============================================================
 // HERO — la source (showreel ou photo) joue dans les lettres, en trame de points rouges
 // ============================================================
+// Cloudinary : une variante réduite pour ce qui s'affiche petit (trame, aperçus). Le lecteur garde l'original.
+const cloudVariant = (url, width) => {
+  if (!/res\.cloudinary\.com\/[^/]+\/video\/upload\//.test(url) || /[,/]w_\d+/.test(url)) return url;
+  return url.replace(/\/video\/upload\/(?:([^/]*)\/)?(?=v\d+\/)/, (m, t) => `/video/upload/${t && !/^v\d+$/.test(t) ? t + ',' : ''}w_${width},c_limit/`);
+};
+// affiches et photos de grille : jamais plus larges que 2× leur zone d'affichage (le plein cadre garde l'original)
+const cloudImage = (url, width) => {
+  if (!/res\.cloudinary\.com\/[^/]+\/(image|video)\/upload\//.test(url)) return url;
+  return url.replace(/([,/])w_(\d+)(?=[,/])/, (m, sep, w) => +w > width ? `${sep}w_${width}` : m);
+};
+// les photos locales du site sont énormes (jusqu'à 19 Mo) : le hero utilise les copies allégées de proposition-3/img
+const localLight = url => {
+  const m = /^(?:\.\.\/|\/)?img\/([\w-]+\.jpg)$/.exec(url || '');
+  return m ? (isHome ? 'img/' : '../img/') + m[1] : url;
+};
+
 function mountHero({ video: reelSrc, image: poster }) {
   const hero = document.querySelector('.hero');
   const cv = document.querySelector('.hero-canvas');
@@ -82,31 +96,41 @@ function mountHero({ video: reelSrc, image: poster }) {
   hero.classList.add('has-canvas');
   const titleOf = () => ((innerWidth <= 720 && hero.dataset.titleMobile) || hero.dataset.title || 'TOM|CARVALHO').split('|');
 
-  let src = null, srcW = 0, srcH = 0;
+  let src = null, srcW = 0, srcH = 0, video = null;
+  let visible = !document.hidden, inView = true;
+  let active = null, dotsDirty = true, lastFrame = -1, frameReady = false, hasVFC = false;
+  // la vidéo ne décode que si le hero est à l'écran et l'onglet visible
+  const syncVideo = () => { if (!video || src !== video) return; if (visible && inView) video.play().catch(() => {}); else video.pause(); };
   if (reduced || !reelSrc) {
     if (poster) {
-      const img = new Image(); img.crossOrigin = 'anonymous'; img.src = poster;
-      img.onload = () => { src = img; srcW = img.naturalWidth; srcH = img.naturalHeight; kick(); };
+      const img = new Image(); img.crossOrigin = 'anonymous'; img.src = localLight(poster);
+      img.onload = () => { src = img; srcW = img.naturalWidth; srcH = img.naturalHeight; dotsDirty = true; kick(); };
     }
   } else {
-    const v = document.createElement('video');
-    v.muted = true; v.loop = true; v.playsInline = true; v.crossOrigin = 'anonymous'; v.preload = 'auto';
-    if (poster) v.poster = poster;
-    v.src = reelSrc;
-    v.addEventListener('loadeddata', () => { src = v; srcW = v.videoWidth; srcH = v.videoHeight; v.play().catch(() => {}); kick(); });
-    v.addEventListener('error', () => { src = null; kick(); });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) v.pause(); else if (src === v) v.play().catch(() => {}); });
+    video = document.createElement('video');
+    video.muted = true; video.loop = true; video.playsInline = true; video.crossOrigin = 'anonymous'; video.preload = 'auto';
+    if (poster) video.poster = poster;
+    // 1600 px suffisent : la trame échantillonne ~100 colonnes, la loupe couvre un cinquième de l'écran
+    video.src = cloudVariant(reelSrc, 1600);
+    video.addEventListener('loadeddata', () => { src = video; srcW = video.videoWidth; srcH = video.videoHeight; dotsDirty = true; syncVideo(); kick(); });
+    // la trame ne se recalcule qu'à chaque image réellement décodée (25 à 30 par seconde), pas à chaque rafraîchissement
+    if (video.requestVideoFrameCallback) {
+      const onFrame = () => { frameReady = true; video.requestVideoFrameCallback(onFrame); };
+      video.requestVideoFrameCallback(onFrame);
+      hasVFC = true;
+    }
+    video.addEventListener('error', () => { src = null; kick(); });
   }
 
   const sm = document.createElement('canvas');
   const sctx = sm.getContext('2d', { willReadFrequently: true });
   // masque des lettres : dessiné une fois par mise en page, appliqué en une seule opération
-  // (destination-in intersecte à chaque appel : deux fillText successifs donneraient le vide)
-  const mask = document.createElement('canvas');
-  const mctx = mask.getContext('2d');
+  const mask = document.createElement('canvas'); const mctx = mask.getContext('2d');
+  // calque de trame (contour + points) : recalculé seulement à chaque nouvelle image vidéo
+  const dots = document.createElement('canvas'); const dctx = dots.getContext('2d');
   const dpr = Math.min(devicePixelRatio || 1, 1.5);
   let W = 0, H = 0, cell = 12, cols = 0, rows = 0, lines = [], tainted = false;
-  const mouse = { x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, on: false };
+  const mouse = { x: -1e4, y: -1e4, tx: -1e4, ty: -1e4, on: false, dirty: false };
 
   function layout() {
     W = hero.clientWidth; H = hero.clientHeight;
@@ -129,81 +153,124 @@ function mountHero({ video: reelSrc, image: poster }) {
     mctx.setTransform(dpr, 0, 0, dpr, 0, 0); mctx.clearRect(0, 0, W, H);
     mctx.fillStyle = '#000'; mctx.textAlign = 'center'; mctx.textBaseline = 'alphabetic';
     lines.forEach(l => { mctx.font = `${l.f}px Anton`; mctx.fillText(l.t, W / 2, l.y); });
+    dots.width = cv.width; dots.height = cv.height;
+    // cellules utiles : celles qui touchent une lettre, élargies de deux cellules pour couvrir le rayon
+    // et le décalage des rangées impaires. Tout le reste est masqué de toute façon : on ne le dessine plus.
+    const probe = document.createElement('canvas'); probe.width = cols; probe.height = rows;
+    const pctx = probe.getContext('2d', { willReadFrequently: true });
+    pctx.drawImage(mask, 0, 0, cols, rows);
+    const hit = pctx.getImageData(0, 0, cols, rows).data;
+    const raw = new Uint8Array(cols * rows);
+    for (let i = 0; i < raw.length; i++) raw[i] = hit[i * 4 + 3] ? 1 : 0;
+    active = new Uint8Array(cols * rows);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      let on = 0;
+      for (let dr = -2; dr <= 2 && !on; dr++) for (let dc = -2; dc <= 2 && !on; dc++) {
+        const rr = r + dr, cc = c + dc;
+        if (rr >= 0 && rr < rows && cc >= 0 && cc < cols && raw[rr * cols + cc]) on = 1;
+      }
+      active[r * cols + c] = on;
+    }
+    dotsDirty = true;
     draw();
   }
 
-  function cover(target, w, h) {
+  // dessine la source en « cover » ; avec une zone, seule cette portion est calculée (loupe)
+  function cover(target, w, h, zone) {
     const s = Math.max(w / srcW, h / srcH);
-    const dw = srcW * s, dh = srcH * s;
-    target.drawImage(src, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    const dw = srcW * s, dh = srcH * s, ox = (w - dw) / 2, oy = (h - dh) / 2;
+    if (!zone) { target.drawImage(src, ox, oy, dw, dh); return; }
+    const x0 = Math.max(0, zone.x0), y0 = Math.max(0, zone.y0), x1 = Math.min(w, zone.x1), y1 = Math.min(h, zone.y1);
+    if (x1 <= x0 || y1 <= y0) return;
+    target.drawImage(src, (x0 - ox) / s, (y0 - oy) / s, (x1 - x0) / s, (y1 - y0) / s, x0, y0, x1 - x0, y1 - y0);
   }
   function text(fill) {
     ctx.fillStyle = fill; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     lines.forEach(l => { ctx.font = `${l.f}px Anton`; ctx.fillText(l.t, W / 2, l.y); });
   }
 
-  let raf = 0, visible = true, inView = true;
-  function draw() {
-    raf = 0;
-    if (!W) return;
-    ctx.clearRect(0, 0, W, H);
-    if (!src || !srcW) { text('#e3170a'); return; }
-
-    let data = null;
-    if (!tainted) {
-      try { cover(sctx, cols, rows); data = sctx.getImageData(0, 0, cols, rows).data; }
-      catch { tainted = true; }
-    }
-    if (data) {
-      // contour fin sous la trame : les lettres restent lisibles même sur un fondu au noir
-      ctx.save(); ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.strokeStyle = '#e3170a'; ctx.lineJoin = 'round';
-      lines.forEach(l => { ctx.font = `${l.f}px Anton`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.strokeText(l.t, W / 2, l.y); });
-      ctx.restore();
-      // la trame : un point rouge par cellule, gros là où l'image est claire, rayon plancher de 20 %
-      const path = new Path2D();
-      const maxR = cell * 0.56;
-      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+  // le calque de trame : contour fin + un point rouge par cellule utile, gros là où l'image est claire
+  function renderDots() {
+    cover(sctx, cols, rows);
+    const data = sctx.getImageData(0, 0, cols, rows).data;
+    dctx.setTransform(dpr, 0, 0, dpr, 0, 0); dctx.clearRect(0, 0, W, H);
+    dctx.save(); dctx.globalAlpha = 0.45; dctx.lineWidth = 1.5; dctx.strokeStyle = '#e3170a'; dctx.lineJoin = 'round';
+    dctx.textAlign = 'center'; dctx.textBaseline = 'alphabetic';
+    lines.forEach(l => { dctx.font = `${l.f}px Anton`; dctx.strokeText(l.t, W / 2, l.y); });
+    dctx.restore();
+    const path = new Path2D();
+    const maxR = cell * 0.56;
+    for (let r = 0; r < rows; r++) {
+      const shift = r % 2 ? cell / 2 : 0, cy = r * cell + cell / 2;
+      for (let c = 0; c < cols; c++) {
+        if (!active[r * cols + c]) continue;
         const i = (r * cols + c) * 4;
         const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
         const rad = maxR * (0.2 + 0.8 * Math.pow(lum, 0.8));
-        const x = c * cell + cell / 2 + (r % 2 ? cell / 2 : 0);
-        path.moveTo(x + rad, r * cell + cell / 2);
-        path.arc(x, r * cell + cell / 2, rad, 0, Math.PI * 2);
+        const x = c * cell + cell / 2 + shift;
+        path.moveTo(x + rad, cy);
+        path.arc(x, cy, rad, 0, Math.PI * 2);
       }
-      ctx.fillStyle = '#e3170a'; ctx.fill(path);
-    } else {
+    }
+    dctx.fillStyle = '#e3170a'; dctx.fill(path);
+  }
+
+  let raf = 0;
+  function draw() {
+    raf = 0;
+    if (!W) return;
+    const live = !!src && src.tagName === 'VIDEO';
+    const frame = live ? src.currentTime : 0;
+    const newFrame = dotsDirty || (hasVFC ? frameReady : frame !== lastFrame);
+    // la loupe suit la souris avec un peu de retard : on redessine tant qu'elle n'a pas rattrapé
+    const moving = mouse.on && (mouse.dirty || Math.abs(mouse.tx - mouse.x) > 0.05 || Math.abs(mouse.ty - mouse.y) > 0.05);
+    if (src && srcW && !newFrame && !moving) { schedule(live); return; }
+
+    ctx.clearRect(0, 0, W, H);
+    if (!src || !srcW) { text('#e3170a'); return; }
+
+    if (!tainted && newFrame) {
+      try { renderDots(); lastFrame = frame; dotsDirty = false; frameReady = false; } catch { tainted = true; }
+    }
+    if (!tainted) ctx.drawImage(dots, 0, 0, W, H);
+    else {
       // canvas « tainted » (pas de CORS) : image N&B teintée rouge, sans trame
       ctx.save(); ctx.filter = 'grayscale(1) contrast(1.3)'; cover(ctx, W, H); ctx.restore();
       ctx.globalCompositeOperation = 'source-atop'; ctx.fillStyle = 'rgba(227,23,10,.82)'; ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'source-over';
     }
-    // la loupe : sous le curseur, l'image nette en noir et blanc
+    // la loupe : sous le curseur, l'image nette en noir et blanc — seule sa zone est filtrée
     if (mouse.on) {
-      mouse.x += (mouse.tx - mouse.x) * 0.18; mouse.y += (mouse.ty - mouse.y) * 0.18;
+      mouse.x += (mouse.tx - mouse.x) * 0.18; mouse.y += (mouse.ty - mouse.y) * 0.18; mouse.dirty = false;
       const R = Math.min(W, H) * 0.22;
       ctx.save(); ctx.beginPath(); ctx.arc(mouse.x, mouse.y, R, 0, Math.PI * 2); ctx.clip();
-      ctx.filter = 'grayscale(1) contrast(1.35)'; cover(ctx, W, H); ctx.restore();
+      ctx.filter = 'grayscale(1) contrast(1.35)';
+      cover(ctx, W, H, { x0: mouse.x - R - 1, y0: mouse.y - R - 1, x1: mouse.x + R + 1, y1: mouse.y + R + 1 });
+      ctx.restore();
     }
     // tout ça découpé par les lettres
     ctx.globalCompositeOperation = 'destination-in'; ctx.drawImage(mask, 0, 0, W, H);
     ctx.globalCompositeOperation = 'source-over';
-
-    const live = src.tagName === 'VIDEO';
-    if ((live || mouse.on) && visible && inView) raf = requestAnimationFrame(draw);
+    schedule(live);
   }
+  function schedule(live) { if ((live || mouse.on) && visible && inView) raf = requestAnimationFrame(draw); }
   function kick() { if (!raf && visible && inView) raf = requestAnimationFrame(draw); }
 
   hero.addEventListener('pointermove', e => {
     if (!canHover) return;
     const b = hero.getBoundingClientRect();
-    mouse.tx = e.clientX - b.left; mouse.ty = e.clientY - b.top;
+    mouse.tx = e.clientX - b.left; mouse.ty = e.clientY - b.top; mouse.dirty = true;
     if (!mouse.on) { mouse.x = mouse.tx; mouse.y = mouse.ty; mouse.on = true; }
     kick();
   });
-  hero.addEventListener('pointerleave', () => { mouse.on = false; kick(); });
+  hero.addEventListener('pointerleave', () => { mouse.on = false; mouse.dirty = true; kick(); });
   new ResizeObserver(layout).observe(hero);
-  new IntersectionObserver(([e]) => { inView = e.isIntersecting; if (inView) kick(); else if (raf) { cancelAnimationFrame(raf); raf = 0; } }).observe(hero);
-  document.addEventListener('visibilitychange', () => { visible = !document.hidden; kick(); });
+  // un hero qui touche juste le bord de l'écran compte comme « intersectant » : on exige une vraie surface visible
+  new IntersectionObserver(([e]) => {
+    inView = e.isIntersecting && e.intersectionRatio > 0; syncVideo();
+    if (inView) kick(); else if (raf) { cancelAnimationFrame(raf); raf = 0; }
+  }, { threshold: [0, 0.001] }).observe(hero);
+  document.addEventListener('visibilitychange', () => { visible = !document.hidden; syncVideo(); kick(); });
   document.fonts?.load('100px Anton').then(layout).catch(layout);
 }
 
@@ -212,9 +279,10 @@ function mountHero({ video: reelSrc, image: poster }) {
 // ============================================================
 const mediaTag = item => {
   const image = imageURL(item.image), video = safeURL(item.video);
-  if (!video) return `<img src="${esc(image)}" alt="${esc(item.alt || item.titre)}" loading="lazy" decoding="async">`;
-  const cover = item.poster === 'auto' || !image ? 'preload="metadata"' : `poster="${esc(image)}" preload="none"`;
-  return `<video src="${esc(video)}" ${cover} data-image="${esc(image)}" muted loop playsinline aria-label="${esc(item.alt || item.titre)}"></video>`;
+  if (!video) return `<img src="${esc(cloudImage(image, 1280))}" alt="${esc(item.alt || item.titre)}" loading="lazy" decoding="async">`;
+  const cover = item.poster === 'auto' || !image ? 'preload="metadata"' : `poster="${esc(cloudImage(image, 1280))}" preload="none"`;
+  // aperçu au survol en 1280 px (la carte fait 640 px au plus) ; le lecteur plein cadre ouvre l'original
+  return `<video src="${esc(cloudVariant(video, 1280))}" data-full="${esc(video)}" ${cover} data-image="${esc(image)}" muted loop playsinline aria-label="${esc(item.alt || item.titre)}"></video>`;
 };
 const linkAttrs = item => {
   const link = safeURL(item.lien), video = safeURL(item.video), image = imageURL(item.image);
@@ -237,7 +305,7 @@ function mountPhotos(galerie) {
   if (!section || !grid) return;
   const items = (galerie || []).filter(g => imageURL(g.image));
   if (!items.length) { section.hidden = true; return; }
-  grid.innerHTML = items.map((g, i) => `<a class="photo sr" style="--i:${i % 3}" href="${esc(imageURL(g.image))}" data-lightbox="true" aria-label="Agrandir la photo"><img src="${esc(imageURL(g.image))}" alt="${esc(g.alt || g.legende || '')}" loading="lazy" decoding="async"><span class="cap">${esc(g.legende || '')}</span></a>`).join('');
+  grid.innerHTML = items.map((g, i) => `<a class="photo sr" style="--i:${i % 3}" href="${esc(imageURL(g.image))}" data-lightbox="true" aria-label="Agrandir la photo"><img src="${esc(cloudImage(imageURL(g.image), 1200))}" alt="${esc(g.alt || g.legende || '')}" loading="lazy" decoding="async"><span class="cap">${esc(g.legende || '')}</span></a>`).join('');
   reveal(grid);
 }
 
@@ -483,7 +551,7 @@ function mountPlayers() {
     if (card.dataset.play) card.addEventListener('click', e => {
       if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
       e.preventDefault(); document.querySelectorAll('.card video').forEach(v => v.pause());
-      player.play(video.getAttribute('src'), video.poster || video.dataset.image, video.getAttribute('aria-label'));
+      player.play(video.dataset.full || video.getAttribute('src'), video.poster || video.dataset.image, video.getAttribute('aria-label'));
     });
     video.addEventListener('error', () => {
       if (video.dataset.fallback) return;
@@ -496,7 +564,77 @@ function mountPlayers() {
   mountLightbox();
 }
 
+// ---------- présentation : les mots s'allument un à un pendant que le paragraphe traverse l'écran ----------
+function mountScrub() {
+  const el = document.querySelector('[data-scrub]');
+  if (!el || reduced) return;
+  // découpe en mots sans casser les <em> (mots clés rouges)
+  const wrap = node => {
+    [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) { frag.append(part); return; }
+          const w = document.createElement('span'); w.className = 'w'; w.textContent = part; frag.append(w);
+        });
+        n.replaceWith(frag);
+      } else if (n.nodeType === 1) wrap(n);
+    });
+  };
+  wrap(el);
+  const words = [...el.querySelectorAll('.w')];
+  el.classList.add('is-scrub');
+  let lit = -1, raf = 0, active = false;
+  const update = () => {
+    raf = 0;
+    const r = el.getBoundingClientRect(), vh = innerHeight;
+    // 0 quand le haut du paragraphe entre aux 85 % de l'écran, 1 quand son bas atteint 60 %
+    const start = vh * 0.85, end = vh * 0.6;
+    const p = Math.min(1, Math.max(0, (start - r.top) / Math.max(1, (start - end) + r.height)));
+    const n = Math.round(p * words.length);
+    if (n === lit) return;
+    const [a, b] = n > lit ? [Math.max(0, lit), n] : [n, lit];
+    for (let i = a; i < b && i < words.length; i++) words[i].classList.toggle('on', i < n);
+    lit = n;
+  };
+  const onScroll = () => { if (active && !raf) raf = requestAnimationFrame(update); };
+  new IntersectionObserver(([e]) => { active = e.isIntersecting; if (active) onScroll(); }, { rootMargin: '20% 0px' }).observe(el);
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+}
+
+// ---------- contact : envoi Netlify sans rechargement, copie de l'adresse ----------
+function mountContact() {
+  const form = document.querySelector('.contact-form');
+  if (form) {
+    const status = form.querySelector('.cf-status'), button = form.querySelector('button[type="submit"]');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      button.disabled = true; status.classList.remove('is-error'); status.textContent = 'Envoi en cours…';
+      try {
+        const r = await fetch(form.getAttribute('action') || '/', {
+          method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(new FormData(form)).toString()
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        form.reset(); form.classList.add('is-sent'); status.textContent = 'Bien reçu — je te réponds sous 24h.';
+      } catch {
+        status.classList.add('is-error'); status.textContent = "L'envoi a échoué. Écris-moi directement : ";
+        const a = document.createElement('a'); a.href = 'mailto:tom.fj.carvalho@gmail.com'; a.textContent = 'tom.fj.carvalho@gmail.com'; status.append(a);
+      } finally { button.disabled = false; }
+    });
+  }
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copy); } catch { return; }
+    b.textContent = 'Copié ✓'; b.classList.add('is-done');
+    setTimeout(() => { b.textContent = 'Copier'; b.classList.remove('is-done'); }, 1800);
+  }));
+}
+
 (async () => {
+  mountContact();
   const d = await loadData();
   if (isHome) {
     const projets = Array.isArray(d.projets) ? d.projets : [];
@@ -509,6 +647,7 @@ function mountPlayers() {
       Promise.all([document.fonts?.load('20px Anton'), document.fonts?.load('500 10px "IBM Plex Mono"')]),
       new Promise(r => setTimeout(r, 1500))
     ]).catch(() => {}).then(() => mountBadge(stage, document.querySelector('.badge-anchor')));
+    mountScrub();
     mountFilms(projets);
     mountPhotos(d.galerie);
   } else {
