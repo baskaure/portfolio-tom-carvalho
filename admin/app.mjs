@@ -4,7 +4,7 @@ import { IMAGE_ACCEPT, VIDEO_ACCEPT, fileKind, mediaRequest, uploadCloud, optimi
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clone = value => structuredClone(value);
-const state = { user: null, page: 'accueil', data: null, sha: null, dirty: false, busy: false, assets: [], jobs: [], storage: null, pendingDraft: null, dialog: null, deployment: 0 };
+const state = { user: null, page: 'accueil', data: null, sha: null, dirty: false, busy: false, assets: [], jobs: [], storage: null, pendingDraft: null, dialog: null, deployment: 0, pending: new Set() };
 let draftTimer, saveChain = Promise.resolve(), sessionGeneration = 0;
 const token = async () => {
   const user = window.netlifyIdentity?.currentUser();
@@ -13,7 +13,19 @@ const token = async () => {
 };
 const git = new GitStore(token);
 const activeJobs = () => state.jobs.some(job => ['waiting', 'running'].includes(job.status));
-const draftKey = () => `${state.user?.id || state.user?.email}:${state.page}`;
+const keyFor = page => `${state.user?.id || state.user?.email}:${page}`;
+const draftKey = () => keyFor(state.page);
+// pages dont un brouillon attend la publication (celle ouverte comprise si elle est modifiée)
+const pendingPages = () => Object.keys(PAGES).filter(page => state.pending.has(page) || (page === state.page && state.dirty));
+async function refreshPending() {
+  if (!state.user) { state.pending.clear(); renderNav(); return; }
+  const prefix = keyFor('');
+  try {
+    const keys = await draftStore('keys');
+    state.pending = new Set(keys.filter(key => typeof key === 'string' && key.startsWith(prefix)).map(key => key.slice(prefix.length)).filter(page => PAGES[page]));
+  } catch { /* le stockage local peut être indisponible : on garde l'état connu */ }
+  renderNav();
+}
 const previewImage = url => {
   const asset = state.assets.find(asset => asset.path === url);
   return asset ? `data:image/webp;base64,${asset.base64}` : safeURL(url);
@@ -24,21 +36,28 @@ function notice(message, success = false) {
 }
 function controls() {
   const locked = state.busy || activeJobs();
-  $('#publish').disabled = !state.data || !state.dirty || locked || !!state.pendingDraft;
+  const waiting = pendingPages();
+  $('#publish').disabled = !state.data || !waiting.length || locked || !!state.pendingDraft;
   $('#preview').disabled = !state.data || state.busy;
   $('#reload').disabled = locked;
   $('#export').disabled = !state.data || state.busy;
-  $('#editor').inert = locked || !!state.pendingDraft;
+  // pendant les imports, on peut continuer à ajouter des fichiers et à ranger la page
+  $('#editor').inert = state.busy || !!state.pendingDraft;
   $('#logout').disabled = locked; $('#mobile-logout').disabled = locked;
   document.querySelectorAll('.page-link').forEach(button => { button.disabled = !state.user || locked; });
-  $('#publish').innerHTML = state.busy ? 'Un instant…' : 'Publier les changements <span>↑</span>';
+  $('#publish').innerHTML = state.busy ? 'Un instant…' : waiting.length > 1 ? `Publier ${waiting.length} pages <span>↑</span>` : 'Publier les changements <span>↑</span>';
+  const others = waiting.filter(page => page !== state.page);
+  $('#pending-status').hidden = !others.length;
+  $('#pending-status').textContent = others.length ? `Aussi en attente : ${others.map(page => PAGES[page].label).join(', ')} · publiés ensemble` : '';
 }
 function renderNav() {
-  $('#pages').innerHTML = Object.entries(PAGES).map(([key, page], i) => `<button class="page-link ${key === state.page ? 'active' : ''}" data-page="${key}" ${key === state.page ? 'aria-current="page"' : ''}><span class="number">${String(i + 1).padStart(2, '0')}</span>${esc(page.label)}<span class="arrow">↗</span></button>`).join('');
+  const waiting = new Set(pendingPages());
+  $('#pages').innerHTML = Object.entries(PAGES).map(([key, page], i) => `<button class="page-link ${key === state.page ? 'active' : ''}" data-page="${key}" ${key === state.page ? 'aria-current="page"' : ''}><span class="number">${String(i + 1).padStart(2, '0')}</span>${esc(page.label)}${waiting.has(key) ? '<span class="pending-dot" title="Changements à publier"><span class="visually-hidden"> · changements à publier</span></span>' : ''}<span class="arrow">↗</span></button>`).join('');
   controls();
 }
 function markDirty() {
-  state.dirty = true;
+  const first = !state.dirty; state.dirty = true;
+  if (first) renderNav();
   $('#save-status').textContent = 'Modifications à publier · sauvegarde du brouillon…';
   clearTimeout(draftTimer); draftTimer = setTimeout(() => { saveDraft(); }, 400); controls();
 }
@@ -73,13 +92,20 @@ async function loadPage(page, { discard = false } = {}) {
     if (state.pendingDraft && JSON.stringify(state.pendingDraft.data) === JSON.stringify(fresh.data)) {
       await draftStore('delete', key).catch(() => {}); state.pendingDraft = null;
     }
+    let resumed = false;
+    // brouillon fait à partir de la version en ligne : on le reprend directement, pour pouvoir
+    // préparer plusieurs pages puis tout publier d'un coup. S'il part d'une version plus ancienne,
+    // on demande (la publication refuserait d'écraser les changements faits ailleurs).
+    if (state.pendingDraft && state.pendingDraft.baseSha === fresh.sha) {
+      state.data = state.pendingDraft.data; state.assets = state.pendingDraft.assets || []; state.dirty = true; state.pendingDraft = null; resumed = true;
+    }
     $('#draft-notice').hidden = !state.pendingDraft;
-    $('#save-status').textContent = 'Version enregistrée chargée · aucune modification';
+    $('#save-status').textContent = resumed ? 'Brouillon repris · changements non publiés' : 'Version enregistrée chargée · aucune modification';
     $('#breadcrumb').textContent = PAGES[page].label.toUpperCase();
     $('#page-title').innerHTML = `${esc(PAGES[page].label)}<span>.</span>`;
     $('#page-index').textContent = `/ ${String(Object.keys(PAGES).indexOf(page) + 1).padStart(2, '0')}`;
     $('#page-description').textContent = page === 'accueil' ? 'Choisis les images qui donnent le ton.' : 'Fais une place à tes dernières réalisations.';
-    renderEditor(); renderNav(); renderJobs();
+    renderEditor(); renderNav(); renderJobs(); refreshPending();
   } catch (error) { notice(error.message); $('#save-status').textContent = 'Chargement impossible · réessaie'; }
   finally { state.busy = false; controls(); }
 }
@@ -110,9 +136,9 @@ function renderEditor() {
     (state.page === 'accueil' ? listSection('projets', 'Les projets à l’affiche', '02') + listSection('galerie', 'Les instants à partager', '03') : `<section class="section"><label class="period-field">Période affichée <input id="period" value="${esc(state.data.periode)}" maxlength="80"></label></section>` + categorySection('02') + listSection('medias', 'Les réalisations', '03'));
   $('#period')?.addEventListener('input', event => { state.data.periode = event.target.value; markDirty(); });
   document.querySelectorAll('[data-drop]').forEach(zone => {
-    zone.addEventListener('dragover', event => { event.preventDefault(); if (!state.busy && !activeJobs()) zone.classList.add('drag-over'); });
+    zone.addEventListener('dragover', event => { event.preventDefault(); if (!state.busy) zone.classList.add('drag-over'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', event => { event.preventDefault(); zone.classList.remove('drag-over'); if (!state.busy && !activeJobs() && !state.pendingDraft) addFiles(event.dataTransfer.files, zone.dataset.drop); });
+    zone.addEventListener('drop', event => { event.preventDefault(); zone.classList.remove('drag-over'); if (!state.busy && !state.pendingDraft) addFiles(event.dataTransfer.files, zone.dataset.drop); });
   });
   controls();
 }
@@ -131,7 +157,7 @@ $('#editor').addEventListener('input', event => {
 });
 $('#editor').addEventListener('click', event => {
   const button = event.target.closest('button[data-cat]');
-  if (!button || state.busy || activeJobs()) return;
+  if (!button || state.busy) return;
   const action = button.dataset.cat; const index = Number(button.dataset.index); const list = categories();
   if (action === 'add') {
     if (!Array.isArray(state.data.categories)) state.data.categories = [];
@@ -154,7 +180,7 @@ $('#editor').addEventListener('click', event => {
 });
 $('#editor').addEventListener('click', event => {
   const button = event.target.closest('[data-action]');
-  if (!button || state.busy || activeJobs()) return;
+  if (!button || state.busy) return;
   const { action, list } = button.dataset; const index = button.dataset.index === undefined ? null : Number(button.dataset.index);
   if (action === 'upload') return chooseFiles(list);
   if (action === 'edit' || action === 'add') return openEditor(list, index, action === 'add');
@@ -217,8 +243,9 @@ function chooseFiles(list, kind, replacement = false) {
   };
   input.click();
 }
+// les fichiers s'ajoutent à la file même si des imports tournent déjà : tout reste en brouillon
 function addFiles(files, list, target = null, expectedKind = null) {
-  if (state.busy || activeJobs() || state.pendingDraft) return;
+  if (state.busy || state.pendingDraft) return;
   for (const file of files) state.jobs.push({ id: crypto.randomUUID(), file, list, target, expectedKind, status: 'waiting', progress: 0, message: 'En attente', controller: new AbortController() });
   renderJobs(); controls(); runJobs();
 }
@@ -252,7 +279,7 @@ async function runJobs() {
           const title = job.file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
           state.data[job.list].push(job.list === 'galerie' ? { ...result, legende: title, alt: title, style: 'raw' } : { ...result, titre: title, type: kind === 'video' ? 'Film' : 'Photographie', alt: title, lien: '', poster: 'photo', ...(job.list === 'medias' ? { format: 'm-w', categorie: '' } : {}) });
         }
-        job.status = 'done'; job.progress = 100; job.message = 'Prêt dans le brouillon · à publier'; job.file = null;
+        job.status = 'done'; job.progress = 100; job.message = 'Prêt · ajouté au brouillon, rien n’est encore publié'; job.file = null;
         markDirty(); await saveDraft(); renderEditor();
       } catch (error) {
         job.status = error.name === 'AbortError' ? 'cancelled' : 'failed';
@@ -287,7 +314,7 @@ $('#restore-draft').onclick = () => {
 };
 $('#discard-draft').onclick = async () => {
   if (!confirm('Supprimer le brouillon enregistré sur cet appareil ?')) return;
-  try { await draftStore('delete', draftKey()); state.pendingDraft = null; $('#draft-notice').hidden = true; controls(); }
+  try { await draftStore('delete', draftKey()); state.pendingDraft = null; $('#draft-notice').hidden = true; controls(); refreshPending(); }
   catch { notice('Impossible de supprimer le brouillon. Réessaie.'); }
 };
 $('#reload').onclick = () => {
@@ -317,19 +344,42 @@ $('#preview').onclick = () => {
   } catch (error) { notice(error.name === 'QuotaExceededError' ? 'L’aperçu contient trop de nouvelles photos pour ce navigateur. Publie un premier lot ou connecte Cloudinary.' : error.message); }
 };
 $('#publish').onclick = async () => {
-  if (state.busy || activeJobs() || state.pendingDraft || !state.dirty) return;
-  const errors = validatePage(state.page, state.data);
-  if (errors.length) { notice(errors.join('\n')); $('#notice').scrollIntoView({ block: 'center' }); return; }
-  await saveDraft(); state.busy = true; controls(); notice('');
+  if (state.busy || activeJobs() || state.pendingDraft) return;
+  if (state.dirty) {
+    const errors = validatePage(state.page, state.data);
+    if (errors.length) { notice(errors.join('\n')); $('#notice').scrollIntoView({ block: 'center' }); return; }
+    await saveDraft();
+  }
+  await saveChain.catch(() => {});
+  // la page ouverte + les brouillons des autres pages : un seul commit, donc une seule mise en ligne
+  const changes = []; const assets = [];
+  for (const page of pendingPages()) {
+    if (page === state.page) {
+      if (!state.dirty) continue;
+      changes.push({ page, data: clone(state.data), baseSha: state.sha }); assets.push(...state.assets); continue;
+    }
+    const draft = await draftStore('get', keyFor(page)).catch(() => null);
+    if (!draft) continue;
+    changes.push({ page, data: draft.data, baseSha: draft.baseSha }); assets.push(...(draft.assets || []));
+  }
+  if (!changes.length) { refreshPending(); return; }
+  const invalid = changes.flatMap(change => validatePage(change.page, change.data).map(error => `${PAGES[change.page].label} — ${error}`));
+  if (invalid.length) { notice(`${invalid.join('\n')}\nOuvre la page concernée pour corriger avant de publier.`); $('#notice').scrollIntoView({ block: 'center' }); return; }
+  state.busy = true; controls(); notice('');
   try {
-    const published = clone(state.data); const page = state.page;
-    const result = await git.publish(page, published, state.sha, state.assets);
-    state.sha = result.sha; state.dirty = false;
+    const result = await git.publishMany(changes, assets);
+    if (result.shas[state.page]) { state.sha = result.shas[state.page]; state.dirty = false; }
     // Keep local thumbnails until the new deployment serves their files.
-    await saveChain.catch(() => {}); await draftStore('delete', draftKey()).catch(() => {});
+    await saveChain.catch(() => {});
+    for (const change of changes) await draftStore('delete', keyFor(change.page)).catch(() => {});
+    await refreshPending();
+    const names = changes.map(change => PAGES[change.page].label);
     $('#save-status').textContent = 'Enregistré · mise en ligne en cours';
-    notice('Les changements sont enregistrés. Le site prépare leur mise en ligne ; tu peux continuer à travailler.', true);
-    watchDeployment(page, published, ++state.deployment);
+    notice(changes.length > 1
+      ? `${names.join(', ')} : enregistrés en une seule mise en ligne. Le site prépare leur publication ; tu peux continuer à travailler.`
+      : 'Les changements sont enregistrés. Le site prépare leur mise en ligne ; tu peux continuer à travailler.', true);
+    const watched = changes.find(change => change.page === state.page) || changes[0];
+    watchDeployment(watched.page, watched.data, ++state.deployment);
   } catch (error) { notice(error.message); $('#save-status').textContent = 'Publication non confirmée · brouillon conservé'; }
   finally { state.busy = false; controls(); }
 };
@@ -369,7 +419,7 @@ async function logout() {
 }
 function exitStudio() {
   state.jobs.forEach(job => job.controller.abort());
-  sessionGeneration++; state.deployment++; state.user = null; state.data = null; state.storage = null; state.dirty = false; state.assets = []; state.jobs = []; state.pendingDraft = null;
+  sessionGeneration++; state.deployment++; state.user = null; state.data = null; state.storage = null; state.dirty = false; state.assets = []; state.jobs = []; state.pendingDraft = null; state.pending = new Set();
   $('#studio').hidden = true; $('#login-screen').hidden = false; $('#logout').hidden = true; $('#mobile-logout').hidden = true;
   $('#editor').innerHTML = ''; $('#edit-dialog').close(); renderNav();
 }

@@ -118,3 +118,36 @@ test('signing requires authentication and an explicitly allowed account; secret 
     const string = Object.keys(payload.params).sort().map(key => `${key}=${payload.params[key]}`).join('&') + 'secret'; assert.equal(payload.signature, createHash('sha256').update(string).digest('hex'));
   } finally { names.forEach(key => saved[key] === undefined ? delete process.env[key] : process.env[key] = saved[key]); }
 });
+
+test('several pages are published in a single commit, and a conflict on one blocks them all', async () => {
+  const shas = { 'data/accueil.json': 'home-sha', 'data/services/shooting.json': 'shoot-sha' };
+  const run = async ({ conflict = false } = {}) => {
+    const calls = [];
+    const fetcher = async (url, options) => {
+      const path = new URL(url).pathname.replace('/.netlify/git/github', ''); const body = options.body && JSON.parse(options.body); calls.push({ path, body });
+      if (path === '/branches/main') return json({ commit: { sha: 'head' } });
+      if (path.startsWith('/contents/')) { const file = path.slice(10); return json({ sha: conflict && file.includes('shooting') ? 'someone-else' : shas[file], content: encode('{}') }); }
+      if (path.startsWith('/git/commits/')) return json({ tree: { sha: 'tree-head' } });
+      if (path === '/git/blobs') return json({ sha: `blob-${calls.length}` });
+      if (path === '/git/trees') return json({ sha: 'new-tree' });
+      if (path === '/git/commits') return json({ sha: 'new-commit' });
+      if (path === '/git/refs/heads/main') return json({ object: { sha: 'new-commit' } });
+      throw new Error(`Unexpected ${path}`);
+    };
+    const store = new GitStore(async () => 'test-token', fetcher, async () => {});
+    const shooting = { hero: { image: '/img/a.jpg', alt: '' }, periode: '2026', medias: [{ titre: 'A', image: '/img/uploads/photo-2.webp' }] };
+    const result = await store.publishMany([
+      { page: 'accueil', data: { ...changed, galerie: [] }, baseSha: 'home-sha' },
+      { page: 'shooting', data: shooting, baseSha: 'shoot-sha' },
+    ], [{ path: '/img/uploads/photo-2.webp', base64: 'YQ==' }, { path: '/img/uploads/unused.webp', base64: 'Yg==' }]);
+    return { calls, result };
+  };
+  const { calls, result } = await run();
+  assert.equal(calls.filter(c => c.path === '/git/commits').length, 1);
+  assert.equal(calls.filter(c => c.path === '/git/refs/heads/main').length, 1);
+  const tree = calls.find(c => c.path === '/git/trees').body.tree.map(e => e.path).sort();
+  assert.deepEqual(tree, ['data/accueil.json', 'data/services/shooting.json', 'img/uploads/photo-2.webp']);
+  assert.match(calls.find(c => c.path === '/git/commits').body.message, /Accueil, Shooting photo/);
+  assert.ok(result.shas.accueil && result.shas.shooting);
+  await assert.rejects(async () => { const r = await run({ conflict: true }); return r; }, error => error.status === 409 && /Shooting photo/.test(error.message));
+});

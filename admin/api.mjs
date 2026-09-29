@@ -93,29 +93,55 @@ export class GitStore {
   // One atomic commit contains the JSON and its optimized images. Never force main.
   // Rebase only when a concurrent commit did not modify this page.
   async publish(page, data, baseSha, assets = []) {
-    const errors = validatePage(page, data);
-    if (errors.length) throw new Error(errors.join('\n'));
-    const content = JSON.stringify(data, null, 2) + '\n';
-    const jsonBlob = await this.request('/git/blobs', { method: 'POST', body: { content, encoding: 'utf-8' } });
-    const treeEntries = [{ path: PAGES[page].path, mode: '100644', type: 'blob', sha: jsonBlob.sha }];
-    const used = JSON.stringify(data);
+    const result = await this.publishMany([{ page, data, baseSha }], assets);
+    return { sha: result.shas[page], commit: result.commit };
+  }
+
+  // Several pages (and their optimized images) in ONE commit, so one Netlify deploy.
+  // Each page must still match the version it was edited from; otherwise nothing is written.
+  async publishMany(changes, assets = []) {
+    if (!changes.length) throw new Error('Aucun changement à publier.');
+    const pages = new Set();
+    for (const { page, data } of changes) {
+      if (!PAGES[page]) throw new Error('Page inconnue.');
+      if (pages.has(page)) throw new Error('Une page ne peut être publiée qu’une fois par envoi.');
+      pages.add(page);
+      const errors = validatePage(page, data);
+      if (errors.length) throw new Error(changes.length > 1 ? `${PAGES[page].label} — ${errors.join('\n')}` : errors.join('\n'));
+    }
+    const treeEntries = [], blobs = {};
+    for (const { page, data } of changes) {
+      const content = JSON.stringify(data, null, 2) + '\n';
+      const jsonBlob = await this.request('/git/blobs', { method: 'POST', body: { content, encoding: 'utf-8' } });
+      blobs[page] = jsonBlob.sha;
+      treeEntries.push({ path: PAGES[page].path, mode: '100644', type: 'blob', sha: jsonBlob.sha });
+    }
+    const used = changes.map(change => JSON.stringify(change.data)).join('\n');
+    const seen = new Set();
     for (const asset of assets.filter(a => used.includes(a.path))) {
+      if (seen.has(asset.path)) continue; seen.add(asset.path);
       if (!/^\/img\/uploads\/[a-zA-Z0-9-]+\.webp$/.test(asset.path)) throw new Error('Chemin de photo invalide.');
       const blob = await this.request('/git/blobs', { method: 'POST', body: { content: asset.base64, encoding: 'base64' } });
       treeEntries.push({ path: asset.path.slice(1), mode: '100644', type: 'blob', sha: blob.sha });
     }
+    const labels = changes.map(change => PAGES[change.page].label);
+    const message = `admin: modification ${labels.length > 1 ? labels.join(', ') : labels[0]}`;
     for (let attempt = 0; attempt < 4; attempt++) {
       const head = await this.head();
-      const current = await this.readAt(page, head);
-      // Reconcile a response lost after a successful atomic commit.
-      if (current.sha === jsonBlob.sha) return { sha: jsonBlob.sha, commit: head };
-      if (current.sha !== baseSha) throw new ApiError('Cette page a été modifiée depuis son ouverture. Ton brouillon est conservé. Exporte-le, puis recharge la dernière version avant de reporter tes changements.', 409);
+      let published = 0;
+      for (const { page, baseSha } of changes) {
+        const current = await this.readAt(page, head);
+        // Reconcile a response lost after a successful atomic commit.
+        if (current.sha === blobs[page]) { published++; continue; }
+        if (current.sha !== baseSha) throw new ApiError(`La page « ${PAGES[page].label} » a été modifiée depuis son ouverture. Ton brouillon est conservé. Exporte-le, puis recharge la dernière version avant de reporter tes changements.`, 409);
+      }
+      if (published === changes.length) return { shas: blobs, commit: head };
       const parent = await this.request(`/git/commits/${head}`);
       const tree = await this.request('/git/trees', { method: 'POST', body: { base_tree: parent.tree.sha, tree: treeEntries } });
-      const commit = await this.request('/git/commits', { method: 'POST', body: { message: `admin: modification ${PAGES[page].label}`, tree: tree.sha, parents: [head] } });
+      const commit = await this.request('/git/commits', { method: 'POST', body: { message, tree: tree.sha, parents: [head] } });
       try {
         await this.request('/git/refs/heads/main', { method: 'PATCH', body: { sha: commit.sha, force: false } });
-        return { sha: jsonBlob.sha, commit: commit.sha };
+        return { shas: blobs, commit: commit.sha };
       } catch (error) {
         if (![0, 409, 422, 500, 502, 503, 504].includes(error.status) || attempt === 3) throw error;
         await this.pause(500 * (attempt + 1));
@@ -139,7 +165,7 @@ export async function draftStore(action, key, value) {
   return new Promise((resolve, reject) => {
     const tx = database.transaction('drafts', action === 'get' ? 'readonly' : 'readwrite');
     const store = tx.objectStore('drafts');
-    const request = action === 'put' ? store.put(value, key) : store[action](key);
+    const request = action === 'put' ? store.put(value, key) : action === 'keys' ? store.getAllKeys() : store[action](key);
     tx.oncomplete = () => resolve(request.result);
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error || new Error('Brouillon non enregistré.'));
