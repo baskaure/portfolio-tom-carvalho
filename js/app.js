@@ -1,6 +1,6 @@
-// Proposition 3 — un seul script pour l'accueil et les pages services :
+// Site Tom Carvalho — un seul script pour l'accueil et les pages services :
 // amorce, titre tramé (showreel ou photo dans les lettres), grilles, nav, lecteur, lightbox.
-import { safeURL } from '../js/media-url.mjs';
+import { safeURL } from './media-url.mjs';
 import { mountBadge } from './badge.js';
 
 const page = document.body.dataset.page || 'accueil';
@@ -9,7 +9,9 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canHover = matchMedia('(hover: hover)').matches;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad = n => String(n).padStart(2, '0');
-const imageURL = v => safeURL(v, { image: true });
+// en aperçu admin, les photos pas encore publiées arrivent en data:image (base64) : on les accepte
+let preview = false;
+const imageURL = v => safeURL(v, { image: true, preview });
 
 // ---------- données de l'admin (repli statique si le JSON est injoignable) ----------
 const FALLBACK_HOME = {
@@ -21,12 +23,26 @@ const FALLBACK_HOME = {
   galerie: []
 };
 async function loadData() {
+  // aperçu depuis l'admin : le brouillon est passé par sessionStorage (même origine), jamais publié
+  try {
+    const id = new URLSearchParams(location.search).get('preview');
+    if (id && /^[a-f0-9-]{36}$/.test(id)) {
+      const saved = JSON.parse(sessionStorage.getItem(`tom-preview:${id}`) || 'null');
+      if (saved?.page === page && saved.data) { preview = true; window.opener = null; previewBanner(); return saved.data; }
+    }
+  } catch { /* la page publique ne dépend jamais du stockage du navigateur */ }
   const url = isHome ? '/data/accueil.json' : `/data/services/${page}.json`;
   try {
     const r = await fetch(url, { cache: 'no-cache' });
     if (!r.ok) throw new Error(r.status);
     return await r.json();
   } catch { return isHome ? FALLBACK_HOME : { medias: [] }; }
+}
+function previewBanner() {
+  const banner = document.createElement('div'); banner.className = 'admin-preview-banner';
+  banner.textContent = 'APERÇU DU BROUILLON — ces changements ne sont pas encore publiés.';
+  const link = document.createElement('a'); link.href = location.pathname; link.textContent = 'Voir la version publique ↗';
+  banner.append(link); document.body.append(banner);
 }
 
 // ---------- amorce 3·2·1 (accueil) : une fois par session, jamais si animations réduites ----------
@@ -82,10 +98,12 @@ const cloudImage = (url, width) => {
   if (!/res\.cloudinary\.com\/[^/]+\/(image|video)\/upload\//.test(url)) return url;
   return url.replace(/([,/])w_(\d+)(?=[,/])/, (m, sep, w) => +w > width ? `${sep}w_${width}` : m);
 };
-// les photos locales du site sont énormes (jusqu'à 19 Mo) : le hero utilise les copies allégées de proposition-3/img
+// les photos locales du site sont énormes (jusqu'à 19 Mo) : on sert les copies allégées de img/web
+// (seulement pour les fichiers qui ont une copie : toute autre image est servie telle quelle)
+const LIGHT = new Set(['DSC00203.jpg', 'DSC00799.jpg', 'DSC00883.jpg', 'DSC00912.jpg', 'DSC09355.jpg', 'portrait-tom.jpg']);
 const localLight = url => {
   const m = /^(?:\.\.\/|\/)?img\/([\w-]+\.jpg)$/.exec(url || '');
-  return m ? (isHome ? 'img/' : '../img/') + m[1] : url;
+  return m && LIGHT.has(m[1]) ? '/img/web/' + m[1] : url;
 };
 
 function mountHero({ video: reelSrc, image: poster }) {
@@ -305,7 +323,7 @@ function mountPhotos(galerie) {
   if (!section || !grid) return;
   const items = (galerie || []).filter(g => imageURL(g.image));
   if (!items.length) { section.hidden = true; return; }
-  grid.innerHTML = items.map((g, i) => `<a class="photo sr" style="--i:${i % 3}" href="${esc(imageURL(g.image))}" data-lightbox="true" aria-label="Agrandir la photo"><img src="${esc(cloudImage(imageURL(g.image), 1200))}" alt="${esc(g.alt || g.legende || '')}" loading="lazy" decoding="async"><span class="cap">${esc(g.legende || '')}</span></a>`).join('');
+  grid.innerHTML = items.map((g, i) => `<a class="photo${g.style === 'polar' ? ' is-polar' : ''} sr" style="--i:${i % 3}" href="${esc(imageURL(g.image))}" data-lightbox="true" aria-label="Agrandir la photo"><img src="${esc(cloudImage(imageURL(g.image), 1200))}" alt="${esc(g.alt || g.legende || '')}" loading="lazy" decoding="async"><span class="cap">${esc(g.legende || '')}</span></a>`).join('');
   reveal(grid);
 }
 
@@ -639,8 +657,15 @@ function mountContact() {
   if (isHome) {
     const projets = Array.isArray(d.projets) ? d.projets : [];
     const first = projets.find(p => safeURL(p.video)) || projets[0];
-    // image de secours : une frame à 4 s plutôt que la première (souvent un fondu au noir)
-    mountHero({ video: safeURL(first?.video), image: imageURL(first?.image).replace('/so_0,', '/so_4,') });
+    // la vidéo du premier film joue dans les lettres ; la couverture choisie dans l'admin sert d'image
+    // (animations réduites, aucun film vidéo). À défaut, une frame du film à 4 s.
+    const cover = imageURL(d.hero?.image);
+    mountHero({ video: safeURL(first?.video), image: cover ? cloudImage(localLight(cover), 1600) : imageURL(first?.image).replace('/so_0,', '/so_4,') });
+    // le portrait de l'admin s'imprime sur le badge
+    const portrait = imageURL(d.manifeste?.image), photo = document.querySelector('.bf-photo');
+    if (portrait && photo) { photo.src = cloudImage(localLight(portrait), 640); photo.alt = d.manifeste.alt || photo.alt; }
+    const role = document.querySelector('.bf-id small');
+    if (role && typeof d.manifeste?.legende === 'string' && d.manifeste.legende.trim()) role.textContent = d.manifeste.legende;
     // la lanière imprime Anton et Plex Mono sur canvas : on attend les polices (1,5 s max)
     const stage = document.querySelector('[data-badge]');
     if (stage) Promise.race([
@@ -652,7 +677,7 @@ function mountContact() {
     mountPhotos(d.galerie);
   } else {
     const hero = document.querySelector('.hero');
-    const heroImage = imageURL(d.hero?.image) || hero.dataset.image || '';
+    const heroImage = cloudImage(imageURL(d.hero?.image) || hero.dataset.image || '', 1600);
     // la photo du service dans les lettres ; le premier film de la sélection s'il y en a un
     const firstVideo = (d.medias || []).find(m => safeURL(m.video));
     mountHero({ video: safeURL(firstVideo?.video), image: heroImage });
