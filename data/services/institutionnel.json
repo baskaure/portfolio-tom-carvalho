@@ -169,6 +169,17 @@
       "poster": "photo",
       "format": "m-w",
       "categorie": ""
+    },
+    {
+      "video": "https://res.cloudinary.com/x59xsxis/video/upload/f_mp4,vc_h264,q_auto/v1790712094/portfolio-tom/video/43f86043-79be-4f69-8ec9-dff482c57a75.mp4",
+      "image": "https://res.cloudinary.com/x59xsxis/video/upload/so_0,f_jpg,q_auto,w_1600,c_limit/v1790712094/portfolio-tom/video/43f86043-79be-4f69-8ec9-dff482c57a75.jpg",
+      "titre": "RÉEL PROMO SAVIEM PASSION - 2026",
+      "type": "INSTITUTIONEL 9:16",
+      "alt": "CARENE ASSURANCE",
+      "lien": "",
+      "poster": "photo",
+      "format": "m-w",
+      "categorie": ""
     }
   ]
 }
