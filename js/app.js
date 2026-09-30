@@ -54,16 +54,33 @@ else {
   try { seen = sessionStorage.getItem('tom-leader') === '1'; } catch { /* stockage indisponible : on joue l'amorce */ }
   if (reduced || seen) { leader.classList.add('is-off'); ready(); }
   else {
+    // un temps = 500 ms ; rAF pilote le balayage, un clic passe l'amorce
     const num = leader.querySelector('.leader-num');
-    let n = 3;
-    const tick = setInterval(() => {
-      n -= 1;
-      if (n >= 1) { num.textContent = n; return; }
-      clearInterval(tick);
+    const BEAT = 500, COUNT = 3, TOTAL = BEAT * COUNT;
+    let start = 0, shown = COUNT, done = false, raf = 0;
+    const show = n => {
+      const old = num.querySelector('span:not(.out)');
+      if (old) { old.classList.add('out'); old.addEventListener('animationend', () => old.remove(), { once: true }); }
+      const s = document.createElement('span'); s.textContent = n; num.append(s);
+    };
+    const finish = () => {
+      if (done) return;
+      done = true; cancelAnimationFrame(raf);
       leader.classList.add('is-done'); ready();
       try { sessionStorage.setItem('tom-leader', '1'); } catch { /* sans importance */ }
-      setTimeout(() => leader.classList.add('is-off'), 700);
-    }, 450);
+      setTimeout(() => leader.classList.add('is-off'), 1000);
+    };
+    const frame = now => {
+      start ||= now;
+      const t = Math.min(now - start, TOTAL);
+      const n = COUNT - Math.floor(t / BEAT);
+      if (n >= 1 && n !== shown) { shown = n; show(n); }
+      leader.style.setProperty('--beat', t >= TOTAL ? 1 : ((t % BEAT) / BEAT).toFixed(3));
+      if (t >= TOTAL) finish(); else raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    leader.addEventListener('pointerdown', finish);
+    setTimeout(finish, TOTAL + 1500); // filet si l'onglet est en arrière-plan et rAF suspendu
   }
 }
 
