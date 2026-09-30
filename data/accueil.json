@@ -47,37 +47,37 @@
   "galerie": [
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1790712524/portfolio-tom/image/e4ff340c-c699-485b-bd93-c971d1e708fc.jpg",
-      "legende": "DSC01145 4x5",
+      "legende": "ACQUISITION FERRARI",
       "alt": "DSC01145 4x5",
       "style": "raw"
     },
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1790712587/portfolio-tom/image/198ac343-5952-41cd-9a52-3eb66495aba2.jpg",
-      "legende": "BAB 01 37 40 06 4",
+      "legende": "PORSCHE 997 GT3RS",
       "alt": "BAB 01 37 40 06 4",
       "style": "raw"
     },
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1790712553/portfolio-tom/image/e64cf7d6-a3c7-4762-bfde-bd76dc7276bc.jpg",
-      "legende": "MCL F1 GTR LARK PIT",
+      "legende": "MCLAREN F1 GTR",
       "alt": "MCL F1 GTR LARK PIT",
       "style": "raw"
     },
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1790712533/portfolio-tom/image/0c16468b-16f0-4fb4-9a55-62181db8941c.jpg",
-      "legende": "HUNAU MAZDA DOS",
+      "legende": "LES HUNAUDIÈRES AT LE MANS CLASSIC",
       "alt": "HUNAU MAZDA DOS",
       "style": "raw"
     },
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1790712571/portfolio-tom/image/aa3dae61-ba9c-4577-8fe8-af0569d94c5d.jpg",
-      "legende": "NIGHT",
+      "legende": "LE MANS AT NIGHT",
       "alt": "NIGHT",
       "style": "raw"
     },
     {
       "image": "https://res.cloudinary.com/x59xsxis/image/upload/f_auto,q_auto,w_2400,c_limit/v1790712950/portfolio-tom/image/45300b34-0e6c-4a06-915e-27e0bb8a3796.jpg",
-      "legende": "DSC00140",
+      "legende": "FURKA PASS - PORSCHE 911",
       "alt": "DSC00140",
       "style": "raw"
     }
