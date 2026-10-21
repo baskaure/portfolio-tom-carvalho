@@ -157,3 +157,10 @@ test('un refus Cloudinary 401 nomme la variable Netlify fautive', () => {
   assert.match(uploadErrorMessage(401, "Invalid Signature abc. String to sign - 'timestamp=1'."), /CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET/);
   assert.match(uploadErrorMessage(401, 'Something else'), /\(401 : Something else\)/);
 });
+
+test('l’admin revérifie Cloudinary avant chaque import au lieu de garder l’état de la connexion', async () => {
+  const app = await readFile(new URL('../admin/app.mjs', import.meta.url), 'utf8');
+  const refresh = app.indexOf('if (!state.storage?.configured) await refreshStorage();');
+  assert.ok(refresh > 0 && refresh < app.indexOf('if (state.storage?.configured) {'));
+  assert.match(app, /Cloudinary non utilisé : \$\{state\.storageReason\}/);
+});

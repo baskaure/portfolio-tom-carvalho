@@ -4,7 +4,7 @@ import { IMAGE_ACCEPT, VIDEO_ACCEPT, fileKind, mediaRequest, uploadCloud, optimi
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const clone = value => structuredClone(value);
-const state = { user: null, page: 'accueil', data: null, sha: null, dirty: false, busy: false, assets: [], jobs: [], storage: null, pendingDraft: null, dialog: null, deployment: 0, pending: new Set() };
+const state = { user: null, page: 'accueil', data: null, sha: null, dirty: false, busy: false, assets: [], jobs: [], storage: null, storageReason: '', pendingDraft: null, dialog: null, deployment: 0, pending: new Set() };
 let draftTimer, saveChain = Promise.resolve(), sessionGeneration = 0;
 const token = async () => {
   const user = window.netlifyIdentity?.currentUser();
@@ -263,13 +263,14 @@ async function runJobs() {
         if (job.expectedKind === 'video' && kind !== 'video') throw new Error('Choisis un fichier vidéo pour cet emplacement.');
         if (job.file.size > (kind === 'image' ? 30 * 1024 * 1024 : state.storage?.limits?.video || 100 * 1024 * 1024)) throw new Error(`Fichier trop volumineux : limite de ${kind === 'image' ? 30 : Math.round((state.storage?.limits?.video || 100 * 1024 * 1024) / 1024 / 1024)} Mo.`);
         let result;
+        if (!state.storage?.configured) await refreshStorage();
         if (state.storage?.configured) {
           const auth = await mediaRequest(token, { kind, size: job.file.size });
           result = await uploadCloud(job.file, auth, { signal: job.controller.signal, progress: (percent, retry) => {
             job.progress = percent; job.message = retry ? `Connexion interrompue · nouvelle tentative ${retry}/3` : `Transfert ${percent} %`; updateJob(job);
           } });
         } else if (kind === 'image') {
-          const asset = await optimizePhoto(job.file);
+          const asset = await optimizePhoto(job.file).catch(error => { throw new Error(state.storageReason ? `${error.message} Cloudinary non utilisé : ${state.storageReason}` : error.message); });
           if (job.controller.signal.aborted) throw new DOMException('Import annulé.', 'AbortError');
           state.assets.push(asset); result = { image: asset.path };
         } else throw new Error('Le stockage vidéo n’est pas encore connecté. Configure Cloudinary dans Netlify, puis réessaie. Tu peux aussi utiliser un lien vidéo déjà hébergé.');
@@ -403,14 +404,18 @@ async function enter(user) {
   $('#login-screen').hidden = true; $('#studio').hidden = false; $('#logout').hidden = false; $('#mobile-logout').hidden = false;
   $('#account-name').textContent = user.user_metadata?.full_name?.split(' ')[0] || 'Tom';
   window.netlifyIdentity?.close();
-  const generation = sessionGeneration;
-  mediaRequest(token).then(config => {
-    if (generation !== sessionGeneration) return;
-    state.storage = config;
-    $('#media-status').textContent = config.configured ? `Photos + vidéos connectées · vidéos ${Math.round(config.limits.video / 1024 / 1024)} Mo max` : 'Photos disponibles · stockage vidéo à connecter';
-    if (!config.configured && $('#notice').hidden) notice(config.error);
-  }).catch(error => { if (generation === sessionGeneration) { state.storage = null; $('#media-status').textContent = 'Photos disponibles · stockage vidéo indisponible'; if ($('#notice').hidden) notice(error.message); } });
+  refreshStorage(true);
   await loadPage(state.page);
+}
+// Re-asked before each import: a check made at login goes stale once Netlify is fixed and redeployed.
+function refreshStorage(announce = false) {
+  const generation = sessionGeneration;
+  return mediaRequest(token).then(config => {
+    if (generation !== sessionGeneration) return;
+    state.storage = config; state.storageReason = config.configured ? '' : config.error;
+    $('#media-status').textContent = config.configured ? `Photos + vidéos connectées · vidéos ${Math.round(config.limits.video / 1024 / 1024)} Mo max` : 'Photos disponibles · stockage vidéo à connecter';
+    if (announce && !config.configured && $('#notice').hidden) notice(config.error);
+  }).catch(error => { if (generation === sessionGeneration) { state.storage = null; state.storageReason = error.message; $('#media-status').textContent = 'Photos disponibles · stockage vidéo indisponible'; if (announce && $('#notice').hidden) notice(error.message); } });
 }
 async function logout() {
   if (state.busy || activeJobs()) return;
@@ -419,7 +424,7 @@ async function logout() {
 }
 function exitStudio() {
   state.jobs.forEach(job => job.controller.abort());
-  sessionGeneration++; state.deployment++; state.user = null; state.data = null; state.storage = null; state.dirty = false; state.assets = []; state.jobs = []; state.pendingDraft = null; state.pending = new Set();
+  sessionGeneration++; state.deployment++; state.user = null; state.data = null; state.storage = null; state.storageReason = ''; state.dirty = false; state.assets = []; state.jobs = []; state.pendingDraft = null; state.pending = new Set();
   $('#studio').hidden = true; $('#login-screen').hidden = false; $('#logout').hidden = true; $('#mobile-logout').hidden = true;
   $('#editor').innerHTML = ''; $('#edit-dialog').close(); renderNav();
 }
