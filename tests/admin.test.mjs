@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { GitStore, ApiError, encode, decode, safeURL, validatePage } from '../admin/api.mjs';
-import { uploadCloud, CHUNK_SIZE, fileKind } from '../admin/media.mjs';
+import { uploadCloud, CHUNK_SIZE, fileKind, uploadErrorMessage } from '../admin/media.mjs';
 const { handler } = createRequire(import.meta.url)('../netlify/functions/media-sign.js');
 const original = JSON.parse(await readFile(new URL('../data/accueil.json', import.meta.url)));
 const changed = structuredClone(original); changed.hero.alt = 'Été — tournage à São João 🎬';
@@ -150,4 +150,10 @@ test('several pages are published in a single commit, and a conflict on one bloc
   assert.match(calls.find(c => c.path === '/git/commits').body.message, /Accueil, Shooting photo/);
   assert.ok(result.shas.accueil && result.shas.shooting);
   await assert.rejects(async () => { const r = await run({ conflict: true }); return r; }, error => error.status === 409 && /Shooting photo/.test(error.message));
+});
+
+test('un refus Cloudinary 401 nomme la variable Netlify fautive', () => {
+  assert.match(uploadErrorMessage(401, 'Invalid cloud_name s5zq1qII'), /CLOUDINARY_CLOUD_NAME/);
+  assert.match(uploadErrorMessage(401, "Invalid Signature abc. String to sign - 'timestamp=1'."), /CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET/);
+  assert.match(uploadErrorMessage(401, 'Something else'), /\(401 : Something else\)/);
 });

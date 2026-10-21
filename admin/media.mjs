@@ -21,6 +21,15 @@ export async function mediaRequest(token, body) {
   if (!response.ok) throw new ApiError(data.error || 'Stockage indisponible.', response.status);
   return data;
 }
+export function uploadErrorMessage(status, message = '') {
+  if (/cloud_name/i.test(message)) return 'Cloud name Cloudinary inconnu. Vérifie CLOUDINARY_CLOUD_NAME dans Netlify, puis redéploie.';
+  if (/signature|api_key|api key/i.test(message)) return 'Clé et secret Cloudinary ne vont pas ensemble. Vérifie CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET (même paire) dans Netlify, puis redéploie.';
+  if (/size|too large|maximum/i.test(message)) return 'Ce fichier dépasse la limite du compte Cloudinary. Réduis sa taille ou adapte la limite du compte.';
+  if (/format|unsupported|invalid video/i.test(message)) return 'Ce format ne peut pas être lu. Exporte la vidéo en MP4 (H.264) ou la photo en JPG.';
+  if (/quota|limit exceeded/i.test(message)) return 'Le quota Cloudinary est atteint. Vérifie le compte de stockage.';
+  return `Le stockage a refusé le transfert (${status}${message ? ` : ${message}` : ''}). Vérifie la configuration ou réessaie.`;
+}
+
 export function uploadPart(url, form, headers, signal, progress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -34,12 +43,7 @@ export function uploadPart(url, form, headers, signal, progress) {
       let result;
       try { result = JSON.parse(xhr.responseText); } catch { return fail(new ApiError('Réponse du stockage illisible.', xhr.status)); }
       if (xhr.status < 200 || xhr.status >= 300) {
-        const message = result.error?.message || '';
-        const friendly = /size|too large|maximum/i.test(message) ? 'Ce fichier dépasse la limite du compte Cloudinary. Réduis sa taille ou adapte la limite du compte.'
-          : /format|unsupported|invalid video/i.test(message) ? 'Ce format ne peut pas être lu. Exporte la vidéo en MP4 (H.264) ou la photo en JPG.'
-          : /quota|limit exceeded/i.test(message) ? 'Le quota Cloudinary est atteint. Vérifie le compte de stockage.'
-          : `Le stockage a refusé le transfert (${xhr.status}). Vérifie la configuration ou réessaie.`;
-        return fail(new ApiError(friendly, xhr.status));
+        return fail(new ApiError(uploadErrorMessage(xhr.status, result.error?.message), xhr.status));
       }
       success(result);
     };
