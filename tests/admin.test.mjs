@@ -109,7 +109,8 @@ test('signing requires authentication and an explicitly allowed account; secret 
     const context = { clientContext: { user: { sub: 'tom', email: 'tom@example.test' } } };
     assert.equal(JSON.parse((await handler({ httpMethod: 'GET' }, context)).body).configured, false);
     Object.assign(process.env, { CLOUDINARY_CLOUD_NAME: 'cloud', CLOUDINARY_API_KEY: 'key', CLOUDINARY_API_SECRET: 'secret', ADMIN_EMAILS: 'tom@example.test' });
-    assert.equal((await handler({ httpMethod: 'POST' }, { clientContext: { user: { sub: 'visitor', email: 'visitor@example.test' } } })).statusCode, 403);
+    const refused = await handler({ httpMethod: 'POST' }, { clientContext: { user: { sub: 'visitor', email: 'visitor@example.test' } } });
+    assert.equal(refused.statusCode, 403); assert.match(JSON.parse(refused.body).error, /visitor@example\.test.*ADMIN_EMAILS/);
     assert.equal((await handler({ httpMethod: 'POST', body: '{' }, context)).statusCode, 400);
     assert.equal((await handler({ httpMethod: 'POST', body: JSON.stringify({ kind: 'video', size: 101 * 1024 * 1024 }) }, context)).statusCode, 400);
     const response = await handler({ httpMethod: 'POST', body: JSON.stringify({ kind: 'video', size: 100 }) }, context);

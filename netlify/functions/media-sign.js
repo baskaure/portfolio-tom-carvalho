@@ -15,7 +15,7 @@ exports.handler = async (event, context) => {
     error: 'Le stockage vidéo reste à connecter. Renseigner Cloudinary et les adresses autorisées dans Netlify ; les photos optimisées restent disponibles.',
   });
   const allowed = env.ADMIN_EMAILS.split(',').map(email => email.trim().toLowerCase()).filter(Boolean);
-  if (!allowed.includes(String(user.email || '').toLowerCase())) return reply(403, { error: 'Ce compte n’est pas autorisé à importer sur Cloudinary.' });
+  if (!allowed.includes(String(user.email || '').toLowerCase())) return reply(403, { error: `Ce compte (${user.email || 'e-mail inconnu'}) n’est pas autorisé à importer sur Cloudinary. Ajoute cet e-mail dans ADMIN_EMAILS sur Netlify, puis redéploie.` });
   const videoLimitMB = Math.min(2000, Math.max(1, Number(env.MEDIA_MAX_VIDEO_MB) || 100));
   const limits = { image: 30 * 1024 * 1024, video: videoLimitMB * 1024 * 1024 };
   if (event.httpMethod === 'GET') return reply(200, { configured: true, limits });
