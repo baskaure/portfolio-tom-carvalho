@@ -6,6 +6,17 @@
   "periode": "2023 — 2026",
   "medias": [
     {
+      "video": "",
+      "image": "https://i.ytimg.com/vi/0-YCjc1gbKA/maxresdefault.jpg",
+      "titre": "CAR BRUNCH - PLACE VENDÔME",
+      "type": "AFTERMOVIE",
+      "alt": "CAR BRUNCH - PLACE VENDÔME",
+      "lien": "https://youtu.be/0-YCjc1gbKA",
+      "poster": "photo",
+      "format": "m-w",
+      "categorie": ""
+    },
+    {
       "video": "https://res.cloudinary.com/s5zq1qll/video/upload/f_mp4,vc_h264,q_auto/v1793570241/portfolio-tom/video/ac807599-c2ad-40d6-800d-d62578b186ec.mp4",
       "image": "https://res.cloudinary.com/s5zq1qll/video/upload/so_0,f_jpg,q_auto,w_1600,c_limit/v1793570241/portfolio-tom/video/ac807599-c2ad-40d6-800d-d62578b186ec.jpg",
       "titre": "TRACK DAY - ALPINE",
@@ -45,17 +56,6 @@
       "type": "AFTERMOVIE",
       "alt": "COLD START V1 SITE",
       "lien": "",
-      "poster": "photo",
-      "format": "m-w",
-      "categorie": ""
-    },
-    {
-      "video": "",
-      "image": "https://i.ytimg.com/vi/0-YCjc1gbKA/maxresdefault.jpg",
-      "titre": "CAR BRUNCH - PLACE VENDÔME",
-      "type": "AFTERMOVIE",
-      "alt": "CAR BRUNCH - PLACE VENDÔME",
-      "lien": "https://youtu.be/0-YCjc1gbKA",
       "poster": "photo",
       "format": "m-w",
       "categorie": ""
