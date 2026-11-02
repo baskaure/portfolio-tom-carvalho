@@ -385,8 +385,11 @@ const mediaTag = item => {
   // aperçu au survol en 1280 px (la carte fait 640 px au plus) ; le lecteur plein cadre ouvre l'original
   return `<video src="${esc(cloudVariant(video, 1280))}" data-full="${esc(video)}" ${cover} data-image="${esc(image)}" muted loop playsinline aria-label="${esc(item.alt || item.titre)}"></video>`;
 };
+// les films trop lourds pour Cloudinary sont sur YouTube : le lien suffit, on les lit dans un lecteur incrusté
+const ytId = url => (String(url || '').match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([\w-]{11})/) || [])[1] || '';
 const linkAttrs = item => {
-  const link = safeURL(item.lien), video = safeURL(item.video), image = imageURL(item.image);
+  const link = safeURL(item.lien), video = safeURL(item.video), image = imageURL(item.image), yt = ytId(link);
+  if (yt) return `href="${esc(link)}" data-yt="${yt}" aria-label="Lire ${esc(item.titre || 'la vidéo')}"`;
   if (link) return `href="${esc(link)}" target="_blank" rel="noopener noreferrer"`;
   if (video) return `href="${esc(video)}" data-play="true" aria-label="Lire ${esc(item.titre || 'la vidéo')}"`;
   if (image) return `href="${esc(image)}" data-lightbox="true" aria-label="Agrandir ${esc(item.titre || 'la photo')}"`;
@@ -567,6 +570,27 @@ function mountVideoPlayer() {
   };
 }
 
+// ---------- lecteur YouTube : même cadre que le lecteur maison, contrôles fournis par YouTube ----------
+function mountYouTubePlayer() {
+  const dialog = document.createElement('dialog'); dialog.className = 'player is-yt';
+  dialog.setAttribute('aria-label', 'Lecteur vidéo');
+  dialog.innerHTML = `<div class="pl-frame"><iframe title="" style="display:block;width:100%;aspect-ratio:16/9;max-height:88dvh;border:0;background:#000" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <button type="button" class="pl-btn pl-close" aria-label="Fermer la vidéo">${ICONS.close}</button></div>`;
+  document.body.append(dialog);
+  const frame = dialog.querySelector('iframe');
+  dialog.querySelector('.pl-close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
+  // vider la source coupe le son à la fermeture
+  dialog.addEventListener('close', () => frame.removeAttribute('src'));
+  return {
+    play(id, label) {
+      frame.title = label || 'Vidéo du portfolio';
+      frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+      dialog.showModal();
+    }
+  };
+}
+
 // ---------- visionneuse photo : même langage vitré que le lecteur, navigation entre les photos ----------
 function mountLightbox() {
   const cards = [...document.querySelectorAll('[data-lightbox]')];
@@ -662,6 +686,12 @@ function mountPlayers() {
     });
   });
 
+  const yt = mountYouTubePlayer();
+  document.querySelectorAll('.card[data-yt]').forEach(card => card.addEventListener('click', e => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    e.preventDefault(); yt.play(card.dataset.yt, card.getAttribute('aria-label'));
+  }));
+
   mountLightbox();
 }
 
@@ -723,7 +753,7 @@ function mountContact() {
         form.reset(); form.classList.add('is-sent'); status.textContent = 'Bien reçu — je te réponds sous 24h.';
       } catch {
         status.classList.add('is-error'); status.textContent = "L'envoi a échoué. Écris-moi directement : ";
-        const a = document.createElement('a'); a.href = 'mailto:tom.fj.carvalho@gmail.com'; a.textContent = 'tom.fj.carvalho@gmail.com'; status.append(a);
+        const a = document.createElement('a'); a.href = 'mailto:crvtomi@gmail.com'; a.textContent = 'crvtomi@gmail.com'; status.append(a);
       } finally { button.disabled = false; }
     });
   }

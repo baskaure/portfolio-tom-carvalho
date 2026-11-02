@@ -8,7 +8,7 @@ const output = require('node:os').tmpdir();
   const context = await browser.newContext({ viewport: { width: 1440, height: 1080 } });
   const page = await context.newPage(); const errors = []; const writes = []; const blobs = new Map(); const docs = new Map(); const images = new Map();
   page.on('pageerror', e => errors.push(e.message));
-  for (const key of ['accueil','contenu','institutionnel','aftermovies','shooting','etalonnage']) {
+  for (const key of ['accueil','contenu','institutionnel','aftermovies']) {
     const path = key === 'accueil' ? 'data/accueil.json' : `data/services/${key}.json`;
     docs.set(path, { sha: `original-${key}`, data: JSON.parse(await fs.readFile(`${root}/${path}`, 'utf8')) });
   }
@@ -57,7 +57,7 @@ const output = require('node:os').tmpdir();
   while(await page.locator('[data-action="delete"][data-list="galerie"]').count()) await page.locator('[data-action="delete"][data-list="galerie"]').first().click();
   assert.equal(await page.locator('[data-section="galerie"] .media-card').count(),0);
   // a second page is prepared before publishing: both go out in ONE commit (one Netlify deploy)
-  await page.locator('[data-page="shooting"]').click(); await page.waitForFunction(()=>document.querySelector('#page-title').textContent.includes('Shooting'));
+  await page.locator('[data-page="aftermovies"]').click(); await page.waitForFunction(()=>document.querySelector('#page-title').textContent.includes('Aftermovies'));
   await page.locator('[data-list="medias"][data-action="edit"]').first().click();
   await page.locator('[name="titre"]').fill('Série São João'); await page.getByRole('button',{name:'Garder les modifications'}).click();
   await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('Brouillon sur'));
@@ -67,13 +67,13 @@ const output = require('node:os').tmpdir();
   assert.equal(writes.length,0,'nothing is pushed before the explicit publication');
   await page.locator('#publish').click(); await page.waitForFunction(()=>document.querySelector('#save-status').textContent.includes('Enregistré'));
   assert.equal(commits,1,'several pages, one commit'); assert.equal(docs.get('data/accueil.json').data.galerie.length,0); assert.equal(images.size,2);
-  assert.equal(docs.get('data/services/shooting.json').data.medias[0].titre,'Série São João');
-  assert.match(writes.find(w=>w.path==='/git/commits').body.message,/Accueil, Shooting photo/);
+  assert.equal(docs.get('data/services/aftermovies.json').data.medias[0].titre,'Série São João');
+  assert.match(writes.find(w=>w.path==='/git/commits').body.message,/Accueil, Aftermovies/);
   assert.equal(await page.locator('.page-link .pending-dot').count(),0,'nothing left to publish');
   const publicPage=await context.newPage(); await publicPage.goto('http://127.0.0.1:8080/'); await publicPage.waitForFunction(()=>document.querySelectorAll('.films-grid .card').length===5);
   assert.equal(await publicPage.locator('.photos-grid .photo').count(),0); assert.equal(await publicPage.locator('.photos').isHidden(),true); await publicPage.close();
-  await page.locator('[data-page="shooting"]').click(); await page.waitForFunction(()=>document.querySelector('#page-title').textContent.includes('Shooting'));
-  const serviceCards=await page.locator('.media-card').count(); assert.ok(serviceCards>0,'shooting page needs media to edit');
+  await page.locator('[data-page="aftermovies"]').click(); await page.waitForFunction(()=>document.querySelector('#page-title').textContent.includes('Aftermovies'));
+  const serviceCards=await page.locator('.media-card').count(); assert.ok(serviceCards>0,'aftermovies page needs media to edit');
   await page.setViewportSize({width:390,height:844}); await page.screenshot({path:`${output}/tom-admin-mobile.png`,fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile horizontal overflow');
   await page.locator('[data-list="medias"][data-action="edit"]').first().click();

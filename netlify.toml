@@ -10,6 +10,17 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# CSS et JS sans nom versionné : le navigateur revalide à chaque visite (sinon il garde l'ancienne mise en page)
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 [[headers]]
   for = "/admin/*"
   [headers.values]
@@ -23,3 +34,14 @@
   for = "/.netlify/functions/*"
   [headers.values]
     Cache-Control = "no-store"
+
+# Pages retirées le 2 nov. 2026 : on renvoie vers l'accueil plutôt qu'un 404
+[[redirects]]
+  from = "/services/shooting.html"
+  to = "/#services"
+  status = 301
+
+[[redirects]]
+  from = "/services/etalonnage.html"
+  to = "/#services"
+  status = 301

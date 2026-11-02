@@ -47,14 +47,14 @@ test('empty lists are valid; missing images and unsafe links are rejected', () =
 test('numbered categories are validated on service pages', () => {
   const page = { hero: { image: '/img/a.jpg', alt: '' }, periode: '2024', categories: [{ id: 'c-1', titre: 'Portraits' }, { id: 'c-2', titre: 'Automobile' }],
     medias: [{ titre: 'A', image: '/img/a.jpg', categorie: 'c-1' }, { titre: 'B', image: '/img/b.jpg', categorie: '' }, { titre: 'C', image: '/img/c.jpg' }] };
-  assert.deepEqual(validatePage('shooting', page), []);
+  assert.deepEqual(validatePage('aftermovies', page), []);
   // Pages published before categories existed carry neither the list nor the field.
-  assert.deepEqual(validatePage('shooting', { ...page, categories: undefined, medias: page.medias.slice(1) }), []);
+  assert.deepEqual(validatePage('aftermovies', { ...page, categories: undefined, medias: page.medias.slice(1) }), []);
   const bad = structuredClone(page); bad.categories[1].titre = ' '; bad.categories.push({ id: 'c-1', titre: 'Doublon' }); bad.medias[0].categorie = 'c-supprimee';
-  const errors = validatePage('shooting', bad);
+  const errors = validatePage('aftermovies', bad);
   assert.equal(errors.length, 3); assert.match(errors[0], /Catégorie 2 : donne-lui un nom/); assert.match(errors[1], /Catégorie 3 : identifiant en double/); assert.match(errors[2], /Projet 1 : sa catégorie n’existe plus/);
   // A broken list also orphans every media that pointed into it.
-  assert.deepEqual(validatePage('shooting', { ...page, categories: 'oops' }).map(e => e.split(' :')[0]), ['La liste des catégories est invalide.', 'Projet 1']);
+  assert.deepEqual(validatePage('aftermovies', { ...page, categories: 'oops' }).map(e => e.split(' :')[0]), ['La liste des catégories est invalide.', 'Projet 1']);
 });
 test('JSON and referenced photos are committed atomically without forcing main', async () => {
   const data = structuredClone(changed); data.hero.image = '/img/uploads/photo-1.webp';
@@ -121,13 +121,13 @@ test('signing requires authentication and an explicitly allowed account; secret 
 });
 
 test('several pages are published in a single commit, and a conflict on one blocks them all', async () => {
-  const shas = { 'data/accueil.json': 'home-sha', 'data/services/shooting.json': 'shoot-sha' };
+  const shas = { 'data/accueil.json': 'home-sha', 'data/services/aftermovies.json': 'shoot-sha' };
   const run = async ({ conflict = false } = {}) => {
     const calls = [];
     const fetcher = async (url, options) => {
       const path = new URL(url).pathname.replace('/.netlify/git/github', ''); const body = options.body && JSON.parse(options.body); calls.push({ path, body });
       if (path === '/branches/main') return json({ commit: { sha: 'head' } });
-      if (path.startsWith('/contents/')) { const file = path.slice(10); return json({ sha: conflict && file.includes('shooting') ? 'someone-else' : shas[file], content: encode('{}') }); }
+      if (path.startsWith('/contents/')) { const file = path.slice(10); return json({ sha: conflict && file.includes('aftermovies') ? 'someone-else' : shas[file], content: encode('{}') }); }
       if (path.startsWith('/git/commits/')) return json({ tree: { sha: 'tree-head' } });
       if (path === '/git/blobs') return json({ sha: `blob-${calls.length}` });
       if (path === '/git/trees') return json({ sha: 'new-tree' });
@@ -136,10 +136,10 @@ test('several pages are published in a single commit, and a conflict on one bloc
       throw new Error(`Unexpected ${path}`);
     };
     const store = new GitStore(async () => 'test-token', fetcher, async () => {});
-    const shooting = { hero: { image: '/img/a.jpg', alt: '' }, periode: '2026', medias: [{ titre: 'A', image: '/img/uploads/photo-2.webp' }] };
+    const aftermovies = { hero: { image: '/img/a.jpg', alt: '' }, periode: '2026', medias: [{ titre: 'A', image: '/img/uploads/photo-2.webp' }] };
     const result = await store.publishMany([
       { page: 'accueil', data: { ...changed, galerie: [] }, baseSha: 'home-sha' },
-      { page: 'shooting', data: shooting, baseSha: 'shoot-sha' },
+      { page: 'aftermovies', data: aftermovies, baseSha: 'shoot-sha' },
     ], [{ path: '/img/uploads/photo-2.webp', base64: 'YQ==' }, { path: '/img/uploads/unused.webp', base64: 'Yg==' }]);
     return { calls, result };
   };
@@ -147,10 +147,10 @@ test('several pages are published in a single commit, and a conflict on one bloc
   assert.equal(calls.filter(c => c.path === '/git/commits').length, 1);
   assert.equal(calls.filter(c => c.path === '/git/refs/heads/main').length, 1);
   const tree = calls.find(c => c.path === '/git/trees').body.tree.map(e => e.path).sort();
-  assert.deepEqual(tree, ['data/accueil.json', 'data/services/shooting.json', 'img/uploads/photo-2.webp']);
-  assert.match(calls.find(c => c.path === '/git/commits').body.message, /Accueil, Shooting photo/);
-  assert.ok(result.shas.accueil && result.shas.shooting);
-  await assert.rejects(async () => { const r = await run({ conflict: true }); return r; }, error => error.status === 409 && /Shooting photo/.test(error.message));
+  assert.deepEqual(tree, ['data/accueil.json', 'data/services/aftermovies.json', 'img/uploads/photo-2.webp']);
+  assert.match(calls.find(c => c.path === '/git/commits').body.message, /Accueil, Aftermovies/);
+  assert.ok(result.shas.accueil && result.shas.aftermovies);
+  await assert.rejects(async () => { const r = await run({ conflict: true }); return r; }, error => error.status === 409 && /Aftermovies/.test(error.message));
 });
 
 test('un refus Cloudinary 401 nomme la variable Netlify fautive', () => {

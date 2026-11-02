@@ -3,8 +3,6 @@ export const PAGES = {
   contenu: { label: 'Création de contenu', path: 'data/services/contenu.json', url: '/services/contenu.html' },
   institutionnel: { label: 'Institutionnel', path: 'data/services/institutionnel.json', url: '/services/institutionnel.html' },
   aftermovies: { label: 'Aftermovies', path: 'data/services/aftermovies.json', url: '/services/aftermovies.html' },
-  shooting: { label: 'Shooting photo', path: 'data/services/shooting.json', url: '/services/shooting.html' },
-  etalonnage: { label: 'Étalonnage', path: 'data/services/etalonnage.json', url: '/services/etalonnage.html' },
 };
 
 export class ApiError extends Error {
