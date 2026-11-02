@@ -574,18 +574,30 @@ function mountVideoPlayer() {
 function mountYouTubePlayer() {
   const dialog = document.createElement('dialog'); dialog.className = 'player is-yt';
   dialog.setAttribute('aria-label', 'Lecteur vidéo');
-  dialog.innerHTML = `<div class="pl-frame"><iframe title="" style="display:block;width:100%;aspect-ratio:16/9;max-height:88dvh;border:0;background:#000" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  dialog.innerHTML = `<div class="pl-frame" style="aspect-ratio:16/9;max-height:88dvh"><iframe title="" style="display:block;width:100%;height:100%;border:0;background:#000" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <div class="yt-off" hidden><p>Cette vidéo se regarde sur YouTube.</p><a class="yt-off-btn" target="_blank" rel="noopener noreferrer">Regarder sur YouTube →</a></div>
     <button type="button" class="pl-btn pl-close" aria-label="Fermer la vidéo">${ICONS.close}</button></div>`;
   document.body.append(dialog);
-  const frame = dialog.querySelector('iframe');
+  const frame = dialog.querySelector('iframe'), off = dialog.querySelector('.yt-off'), offBtn = off.querySelector('a');
   dialog.querySelector('.pl-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', e => { if (e.target === dialog) dialog.close(); });
   // vider la source coupe le son à la fermeture
   dialog.addEventListener('close', () => frame.removeAttribute('src'));
+  // YouTube refuse parfois la lecture hors de son site (musique sous droits, réglage de la vidéo) :
+  // l'API iframe signale l'erreur (101 / 150 / 152 / 153…), on remplace alors l'écran gris par un vrai lien
+  frame.addEventListener('load', () => frame.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 'tom', channel: 'widget' }), '*'));
+  addEventListener('message', e => {
+    if (e.source !== frame.contentWindow || !/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(e.origin)) return;
+    let d; try { d = JSON.parse(e.data); } catch { return; }
+    if (d?.event === 'onError') { frame.removeAttribute('src'); off.hidden = false; offBtn.focus({ preventScroll: true }); }
+  });
   return {
     play(id, label) {
+      off.hidden = true;
+      offBtn.href = `https://youtu.be/${id}`;
+      off.style.backgroundImage = `url("https://i.ytimg.com/vi/${id}/maxresdefault.jpg")`;
       frame.title = label || 'Vidéo du portfolio';
-      frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+      frame.src = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
       dialog.showModal();
     }
   };
