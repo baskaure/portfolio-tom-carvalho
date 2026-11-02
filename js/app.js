@@ -1,6 +1,6 @@
 // Site Tom Carvalho — un seul script pour l'accueil et les pages services :
 // amorce, titre tramé (showreel ou photo dans les lettres), grilles, nav, lecteur, lightbox.
-import { safeURL } from './media-url.mjs';
+import { safeURL, youtubeId } from './media-url.mjs';
 import { mountBadge } from './badge.js';
 
 const page = document.body.dataset.page || 'accueil';
@@ -386,9 +386,8 @@ const mediaTag = item => {
   return `<video src="${esc(cloudVariant(video, 1280))}" data-full="${esc(video)}" ${cover} data-image="${esc(image)}" muted loop playsinline aria-label="${esc(item.alt || item.titre)}"></video>`;
 };
 // les films trop lourds pour Cloudinary sont sur YouTube : le lien suffit, on les lit dans un lecteur incrusté
-const ytId = url => (String(url || '').match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([\w-]{11})/) || [])[1] || '';
 const linkAttrs = item => {
-  const link = safeURL(item.lien), video = safeURL(item.video), image = imageURL(item.image), yt = ytId(link);
+  const link = safeURL(item.lien), video = safeURL(item.video), image = imageURL(item.image), yt = youtubeId(link);
   if (yt) return `href="${esc(link)}" data-yt="${yt}" aria-label="Lire ${esc(item.titre || 'la vidéo')}"`;
   if (link) return `href="${esc(link)}" target="_blank" rel="noopener noreferrer"`;
   if (video) return `href="${esc(video)}" data-play="true" aria-label="Lire ${esc(item.titre || 'la vidéo')}"`;

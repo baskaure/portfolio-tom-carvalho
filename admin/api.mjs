@@ -17,8 +17,8 @@ export const encode = text => {
 };
 export const decode = text => new TextDecoder().decode(Uint8Array.from(atob(text.replace(/\s/g, '')), c => c.charCodeAt(0)));
 
-import { safeURL } from '../js/media-url.mjs';
-export { safeURL };
+import { safeURL, youtubeId, youtubeThumb } from '../js/media-url.mjs';
+export { safeURL, youtubeId, youtubeThumb };
 
 export function validatePage(page, data) {
   const errors = [];

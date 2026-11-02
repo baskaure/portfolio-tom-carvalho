@@ -1,4 +1,4 @@
-import { PAGES, GitStore, ApiError, safeURL, validatePage, draftStore } from './api.mjs';
+import { PAGES, GitStore, ApiError, safeURL, youtubeId, youtubeThumb, validatePage, draftStore } from './api.mjs';
 import { IMAGE_ACCEPT, VIDEO_ACCEPT, fileKind, mediaRequest, uploadCloud, optimizePhoto } from './media.mjs';
 
 const $ = selector => document.querySelector(selector);
@@ -124,7 +124,7 @@ function categorySection(number) {
 function listSection(key, title, number) {
   const list = state.data[key] || [];
   const photos = key === 'galerie';
-  return `<section class="section" data-section="${key}"><div class="section-title"><h2><span class="section-number">${number}</span>${title}</h2><div class="section-tools"><span class="count">${String(list.length).padStart(2, '0')} ${photos ? 'PHOTOS' : 'CONTENUS'}</span><button class="text-button" data-action="add" data-list="${key}">Ajouter par un lien ↗</button></div></div><div class="dropzone" data-drop="${key}"><div class="dropzone-copy"><span class="upload-icon" aria-hidden="true">↑</span><div><strong>Dépose tes ${photos ? 'photos' : 'photos ou vidéos'} ici.</strong><p>Ou sélectionne plusieurs fichiers sur ton appareil.${photos ? '' : ' Une vignette est créée pour chaque vidéo.'}</p></div></div><button class="secondary" data-action="upload" data-list="${key}">Importer ${photos ? 'des photos' : 'des médias'} <span>+</span></button></div>${list.length ? `<div class="cards-grid">${list.map((item, index) => card(item, index, key)).join('')}</div>` : '<div class="empty">Cette section est vide. Importe tes premières images pour la remplir.</div>'}</section>`;
+  return `<section class="section" data-section="${key}"><div class="section-title"><h2><span class="section-number">${number}</span>${title}</h2><div class="section-tools"><span class="count">${String(list.length).padStart(2, '0')} ${photos ? 'PHOTOS' : 'CONTENUS'}</span>${photos ? '' : `<button class="text-button" data-action="youtube" data-list="${key}">Ajouter une vidéo YouTube ▶</button>`}<button class="text-button" data-action="add" data-list="${key}">Ajouter par un lien ↗</button></div></div><div class="dropzone" data-drop="${key}"><div class="dropzone-copy"><span class="upload-icon" aria-hidden="true">↑</span><div><strong>Dépose tes ${photos ? 'photos' : 'photos ou vidéos'} ici.</strong><p>Ou sélectionne plusieurs fichiers sur ton appareil.${photos ? '' : ' Une vignette est créée pour chaque vidéo.'}</p></div></div><button class="secondary" data-action="upload" data-list="${key}">Importer ${photos ? 'des photos' : 'des médias'} <span>+</span></button></div>${list.length ? `<div class="cards-grid">${list.map((item, index) => card(item, index, key)).join('')}</div>` : '<div class="empty">Cette section est vide. Importe tes premières images pour la remplir.</div>'}</section>`;
 }
 function card(item, index, key) {
   const title = item.titre || item.legende || 'Sans titre';
@@ -183,6 +183,7 @@ $('#editor').addEventListener('click', event => {
   if (!button || state.busy) return;
   const { action, list } = button.dataset; const index = button.dataset.index === undefined ? null : Number(button.dataset.index);
   if (action === 'upload') return chooseFiles(list);
+  if (action === 'youtube') return addYouTube(list);
   if (action === 'edit' || action === 'add') return openEditor(list, index, action === 'add');
   if (action === 'delete') {
     const item = state.data[list][index];
@@ -207,7 +208,7 @@ function openEditor(list, index, isNew = false) {
     (gallery || list === 'manifeste' ? field('legende', 'Légende', item.legende, '', true) : '') +
     field('image', 'Adresse de la photo', item.image, 'L’import remplit ce champ automatiquement. Une URL HTTPS ou un chemin /img/… fonctionne aussi.') +
     field('alt', 'Description de l’image', item.alt, 'Quelques mots pour les personnes qui ne peuvent pas voir la photo.') +
-    (!single && !gallery ? field('video', 'Adresse de la vidéo', item.video, 'Fichier vidéo direct en HTTPS. Laisse vide pour afficher uniquement la photo.') + field('lien', 'Lien au clic (facultatif)', item.lien, 'YouTube, Vimeo, Instagram… Sans lien, le clic ouvre la vidéo importée.') + select('poster', 'Image d’attente de la vidéo', item.poster === 'auto' ? 'auto' : 'photo', [['photo', 'La photo ci-dessus'], ['auto', 'Le premier plan de la vidéo']]) : '') +
+    (!single && !gallery ? field('video', 'Adresse de la vidéo', item.video, 'Fichier vidéo direct en HTTPS. Laisse vide pour afficher uniquement la photo.') + field('lien', 'Lien au clic (facultatif)', item.lien, 'Un lien YouTube se lit dans le lecteur du site (la miniature se remplit toute seule). Vimeo, Instagram… s’ouvrent dans un nouvel onglet. Sans lien, le clic ouvre la vidéo importée.') + select('poster', 'Image d’attente de la vidéo', item.poster === 'auto' ? 'auto' : 'photo', [['photo', 'La photo ci-dessus'], ['auto', 'Le premier plan de la vidéo']]) : '') +
     (gallery ? select('style', 'Présentation', item.style, [['raw','Photo brute'],['polar','Polaroid']]) : '') +
     (list === 'medias' ? select('categorie', 'Catégorie numérotée', categories().some(cat => cat.id === item.categorie) ? item.categorie : '', [['', 'Aucune — affiché en tête de page'], ...categories().map((cat, i) => [cat.id, `${num(i)} — ${cat.titre || 'Sans nom'}`])]) + (categories().length ? '' : '<p class="field-note">Crée d’abord des catégories dans la section « Les catégories » pour pouvoir y ranger ce média.</p>') : '');
   $('#replace-image').onclick = () => chooseFiles(list, 'image', true);
@@ -229,8 +230,26 @@ $('#item-form').addEventListener('submit', event => {
     const input = $(`[name="${name}"]`);
     if (input?.value.trim() && !safeURL(input.value)) { input.setCustomValidity('Utilise une URL HTTPS ou un chemin qui commence par /.'); input.reportValidity(); input.oninput = () => input.setCustomValidity(''); return; }
   }
+  // vidéo YouTube sans vignette : on prend la miniature de YouTube
+  const yt = youtubeId($('[name="lien"]')?.value.trim());
+  if (yt && !$('[name="image"]').value.trim()) $('[name="image"]').value = youtubeThumb(yt);
   applyDialog();
 });
+// vidéos trop lourdes pour Cloudinary : un lien YouTube suffit, titre et miniature viennent de YouTube
+async function addYouTube(list) {
+  const link = prompt('Colle le lien de la vidéo YouTube (youtu.be/… ou youtube.com/watch?v=…)');
+  if (link === null) return;
+  const id = youtubeId(link.trim());
+  if (!id) return alert('Ce lien n’est pas une vidéo YouTube. Copie-le depuis le bouton « Partager » de YouTube.');
+  let titre = 'Nouvelle vidéo';
+  try {
+    const info = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://youtu.be/${id}`)}`).then(r => r.ok ? r.json() : null);
+    if (info?.title) titre = info.title.slice(0, 200);
+  } catch { /* hors ligne ou vidéo privée : le titre reste modifiable */ }
+  state.data[list].push({ titre, type: '', image: youtubeThumb(id), alt: titre, video: '', lien: `https://youtu.be/${id}`, poster: 'photo', format: 'm-w', categorie: '' });
+  markDirty(); renderEditor();
+  openEditor(list, state.data[list].length - 1);
+}
 $('#close-dialog').onclick = $('#cancel-dialog').onclick = () => $('#edit-dialog').close();
 $('#edit-dialog').addEventListener('close', () => { state.dialog = null; });
 function chooseFiles(list, kind, replacement = false) {

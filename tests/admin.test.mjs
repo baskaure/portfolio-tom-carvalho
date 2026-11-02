@@ -165,3 +165,12 @@ test('l’admin revérifie Cloudinary avant chaque import au lieu de garder l’
   assert.ok(refresh > 0 && refresh < app.indexOf('if (state.storage?.configured) {'));
   assert.match(app, /Cloudinary non utilisé : \$\{state\.storageReason\}/);
 });
+
+test('les liens YouTube sont reconnus, les autres non', async () => {
+  const { youtubeId, youtubeThumb } = await import('../js/media-url.mjs');
+  for (const url of ['https://youtu.be/V9iVTBe0Nxw', 'https://youtu.be/V9iVTBe0Nxw?si=abc', 'https://www.youtube.com/watch?v=V9iVTBe0Nxw', 'https://www.youtube.com/watch?feature=share&v=V9iVTBe0Nxw', 'https://m.youtube.com/shorts/V9iVTBe0Nxw', 'https://www.youtube.com/embed/V9iVTBe0Nxw'])
+    assert.equal(youtubeId(url), 'V9iVTBe0Nxw', url);
+  for (const url of ['', 'https://vimeo.com/123', 'http://youtu.be/V9iVTBe0Nxw', 'https://evil.com/youtu.be/V9iVTBe0Nxw', 'https://youtu.be/V9iVTBe0Nxw123'])
+    assert.equal(youtubeId(url), '', url);
+  assert.equal(youtubeThumb('V9iVTBe0Nxw'), 'https://i.ytimg.com/vi/V9iVTBe0Nxw/maxresdefault.jpg');
+});
